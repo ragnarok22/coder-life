@@ -7,6 +7,7 @@ import { Plant, WindowPanel } from "./props";
 import { Character } from "../entities/character";
 import { OfficeEnvironment } from "./office";
 import { officeFloorColor } from "../data/office-layout";
+import { HOME_BED } from "../data/pose-anchors";
 
 function Floor({ location }: { location: Location }) {
   const { w, d } = bounds[location];
@@ -53,23 +54,39 @@ function Home() {
     <>
       <WindowPanel position={[-3.4, 1.9, -4.85]} width={2.8} />
       <Box
-        position={[-3.6, 0.3, -2.7]}
-        size={[2.3, 0.6, 3.4]}
+        position={[
+          HOME_BED.center[0],
+          HOME_BED.frame.centerY,
+          HOME_BED.center[1],
+        ]}
+        size={HOME_BED.frame.size}
         color="#aa815c"
       />
       <Box
-        position={[-3.6, 0.67, -2.7]}
-        size={[2.2, 0.2, 3.3]}
+        position={[
+          HOME_BED.center[0],
+          HOME_BED.mattress.centerY,
+          HOME_BED.center[1],
+        ]}
+        size={HOME_BED.mattress.size}
         color="#eee4c8"
       />
       <Box
-        position={[-3.6, 0.81, -2.15]}
-        size={[2.23, 0.14, 2.1]}
+        position={[
+          HOME_BED.center[0],
+          HOME_BED.blanket.centerY,
+          HOME_BED.blanket.z,
+        ]}
+        size={HOME_BED.blanket.size}
         color="#769c88"
       />
       <Box
-        position={[-3.6, 0.86, -3.83]}
-        size={[1.6, 0.22, 0.7]}
+        position={[
+          HOME_BED.center[0],
+          HOME_BED.pillow.centerY,
+          HOME_BED.pillow.z,
+        ]}
+        size={HOME_BED.pillow.size}
         color="#f6f0db"
       />
       <Box position={[0.5, 1.3, -3]} size={[0.18, 2.6, 4]} color="#c7d1b9" />

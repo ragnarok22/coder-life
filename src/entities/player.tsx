@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useLayoutEffect } from "react";
 import { useFrame } from "@react-three/fiber";
 import {
   CapsuleCollider,
@@ -7,12 +7,13 @@ import {
   useRapier,
 } from "@react-three/rapier";
 import type { RapierRigidBody } from "@react-three/rapier";
-import type { Group } from "three";
+import { Vector3 } from "three";
+import type { Group, Mesh } from "three";
 import { input } from "../game/input";
 import { runtime } from "../game/runtime";
 import { useGame } from "../game/store";
 import { objects, groundHeight } from "../data/world";
-import { lineOfSight } from "../ai/navigation";
+import { lineOfSight, nearestWalkable } from "../ai/navigation";
 import { Character } from "./character";
 import { audio } from "../game/audio";
 import {
@@ -28,10 +29,25 @@ import {
 import type { Locomotion } from "../game/locomotion";
 import { PlayerCamera } from "../rendering/player-camera";
 import { sceneDebug } from "../game/scene-debug";
+import { HOME_BED, CHAIR_POSE } from "../data/pose-anchors";
+import { playerChairPose } from "../data/office-layout";
+import { playerAnimation } from "../game/player-presentation";
+
+interface PlayerPosture {
+  mode: "sleep" | "seat" | "stand" | null;
+  transitioning: number;
+  world: Vector3;
+  parent: Vector3;
+  desired: Vector3;
+  dialogue: boolean;
+}
 
 export function Player() {
   const body = useRef<RapierRigidBody>(null),
-    visual = useRef<Group>(null);
+    visual = useRef<Group>(null),
+    cameraAnchor = useRef<Group>(null),
+    marker = useRef<Mesh>(null),
+    posture = useRef<PlayerPosture | null>(null);
   const { world, rapier } = useRapier();
   const controller = useRef<ReturnType<
     typeof world.createCharacterController
@@ -39,6 +55,16 @@ export function Player() {
   const spawn = useGame((s) => s.game.position),
     motionRef = useRef<Locomotion | null>(null),
     timer = useRef(0);
+  useLayoutEffect(() => {
+    posture.current = {
+      mode: null,
+      transitioning: 0,
+      world: new Vector3(),
+      parent: new Vector3(),
+      desired: new Vector3(),
+      dialogue: false,
+    };
+  }, []);
   useEffect(() => {
     const c = world.createCharacterController(M.colliderOffset);
     c.enableAutostep(M.stepHeight, M.stepWidth, true);
@@ -121,15 +147,12 @@ export function Player() {
             });
         }
     }
-    runtime.animation = state.game.working
-      ? "typing"
-      : state.game.dialogue
-        ? "talk"
-        : runtime.speed < M.idleThreshold
-          ? "idle"
-          : running && runtime.speed > M.walkSpeed * 0.9
-            ? "run"
-            : "walk";
+    runtime.animation = playerAnimation(
+      state.game,
+      state.screen,
+      runtime.speed,
+      running,
+    );
     if (runtime.speed > M.idleThreshold) {
       const heading = Math.atan2(movement.x, movement.z),
         angle = Math.abs(angleDifference(motion.heading, heading));
@@ -151,19 +174,119 @@ export function Player() {
     const b = body.current;
     if (!b) return;
     const state = useGame.getState(),
-      motion = (motionRef.current ??= createLocomotion()),
-      p = b.translation();
-    if (state.screen !== "playing" || state.game.dialogue) {
+      motion = (motionRef.current ??= createLocomotion());
+    const pose = posture.current;
+    if (
+      !pose ||
+      !visual.current ||
+      !visual.current.parent ||
+      !cameraAnchor.current
+    )
+      return;
+    const sleeping = !state.game.awake && state.game.location === "home";
+    const seated =
+      state.game.location === "office" &&
+      (state.game.working || (pose.mode === "seat" && !!state.game.dialogue));
+    const mode = sleeping ? "sleep" : seated ? "seat" : "stand";
+    const initial = pose.mode === null;
+    if (mode !== pose.mode) {
+      const point =
+        mode === "seat"
+          ? playerChairPose.position
+          : pose.mode === "sleep"
+            ? HOME_BED.wakePosition
+            : pose.mode === "seat"
+              ? nearestWalkable(
+                  playerChairPose.exitPosition,
+                  state.game.location,
+                )
+              : null;
+      if (point) {
+        const y =
+          M.halfHeight +
+          M.radius +
+          M.colliderOffset +
+          groundHeight(point, state.game.location);
+        b.setTranslation({ x: point[0], y, z: point[1] }, true);
+        b.setNextKinematicTranslation({ x: point[0], y, z: point[1] });
+        runtime.player[0] = point[0];
+        runtime.player[1] = point[1];
+        motion.x = 0;
+        motion.z = 0;
+        motion.vertical = 0;
+        runtime.speed = 0;
+        motion.heading =
+          mode === "seat"
+            ? playerChairPose.heading
+            : pose.mode === "sleep"
+              ? 0
+              : motion.heading;
+        runtime.yaw = motion.heading;
+        input.reset();
+      }
+      pose.transitioning = initial ? 0 : 0.35;
+      pose.mode = mode;
+    }
+    if (state.game.dialogue && !pose.dialogue) input.reset();
+    pose.dialogue = !!state.game.dialogue;
+    if (
+      state.screen !== "playing" ||
+      state.game.dialogue ||
+      sleeping ||
+      seated ||
+      state.game.hidingZone
+    ) {
       motion.x = 0;
       motion.z = 0;
       runtime.speed = 0;
     }
-    if (visual.current) {
-      const heading = state.game.working ? Math.PI : motion.heading;
-      visual.current.rotation.y +=
-        angleDifference(visual.current.rotation.y, heading) *
-        (1 - Math.exp(-25 * dt));
+    runtime.animation = playerAnimation(
+      state.game,
+      state.screen,
+      runtime.speed,
+      input.held.has("run"),
+    );
+    runtime.active = state.screen === "playing";
+    runtime.seated = seated;
+    runtime.seatHeight = CHAIR_POSE.seatHeight;
+    const elapsed = Math.max(0, Math.min(dt, 0.05));
+    visual.current.parent.getWorldPosition(pose.parent);
+    if (sleeping) pose.desired.fromArray(HOME_BED.sleepOrigin);
+    else if (seated)
+      pose.desired.set(
+        playerChairPose.position[0],
+        groundHeight(playerChairPose.position, "office"),
+        playerChairPose.position[1],
+      );
+    else pose.desired.set(pose.parent.x, pose.parent.y - 0.8, pose.parent.z);
+    if (initial || pose.transitioning <= 0) pose.world.copy(pose.desired);
+    else {
+      pose.world.lerp(pose.desired, 1 - Math.exp(-20 * elapsed));
+      pose.transitioning -= elapsed;
     }
+    visual.current.position.copy(pose.world).sub(pose.parent);
+    const pitch = sleeping ? -Math.PI / 2 : 0,
+      heading = sleeping
+        ? 0
+        : seated
+          ? playerChairPose.heading
+          : motion.heading;
+    visual.current.rotation.x = initial
+      ? pitch
+      : visual.current.rotation.x +
+        (pitch - visual.current.rotation.x) * (1 - Math.exp(-18 * elapsed));
+    visual.current.rotation.y +=
+      angleDifference(visual.current.rotation.y, heading) *
+      (1 - Math.exp(-25 * elapsed));
+    if (sleeping)
+      cameraAnchor.current.position.set(
+        HOME_BED.sleepLookAt[0] - pose.parent.x,
+        HOME_BED.sleepLookAt[1] - C.lookHeight - pose.parent.y,
+        HOME_BED.sleepLookAt[2] - pose.parent.z,
+      );
+    else cameraAnchor.current.position.copy(visual.current.position);
+    if (marker.current) marker.current.visible = mode === "stand";
+    const p = b.translation();
     timer.current += dt;
     if (timer.current < 0.15) return;
     timer.current = 0;
@@ -191,7 +314,7 @@ export function Player() {
       }
     }
     if (state.nearest !== nearest) useGame.setState({ nearest });
-  });
+  }, -1);
   return (
     <>
       <RigidBody
@@ -206,15 +329,20 @@ export function Player() {
         enabledRotations={[false, false, false]}
       >
         <CapsuleCollider args={[M.halfHeight, M.radius]} />
-        <group ref={visual} position={[0, -0.8, 0]}>
+        <group ref={visual} name="player-character" position={[0, -0.8, 0]}>
           <Character glasses sample={() => runtime} />
         </group>
-        <mesh position={[0, -0.77, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <group ref={cameraAnchor} position={[0, -0.8, 0]} />
+        <mesh
+          ref={marker}
+          position={[0, -0.77, 0]}
+          rotation={[-Math.PI / 2, 0, 0]}
+        >
           <ringGeometry args={[0.42, 0.49, 32]} />
           <meshBasicMaterial color="#e8c669" transparent opacity={0.9} />
         </mesh>
       </RigidBody>
-      <PlayerCamera target={visual} />
+      <PlayerCamera target={cameraAnchor} />
     </>
   );
 }

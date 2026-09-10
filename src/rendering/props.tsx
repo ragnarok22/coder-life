@@ -1,4 +1,5 @@
 import { Box, Cylinder, Sign } from "./primitives";
+import { CHAIR_POSE } from "../data/pose-anchors";
 
 export function Plant({
   position,
@@ -99,7 +100,11 @@ export function Chair({
       />
       <Box position={[0, 0.1, 0]} size={[0.72, 0.08, 0.09]} color="#49534d" />
       <Box position={[0, 0.1, 0]} size={[0.09, 0.08, 0.72]} color="#49534d" />
-      <Box position={[0, 0.54, 0]} size={[0.77, 0.16, 0.7]} color={color} />
+      <Box
+        position={[0, CHAIR_POSE.cushionCenter, 0]}
+        size={[0.77, CHAIR_POSE.cushionThickness, 0.7]}
+        color={color}
+      />
       <Box position={[0, 0.96, 0.29]} size={[0.75, 0.75, 0.14]} color={color} />
       {[-0.3, 0.3].map((x) => (
         <Cylinder
@@ -215,7 +220,7 @@ export function Desk({
           background="#e8c774"
         />
       )}
-      {chair && <Chair position={[0, 0, 1.16]} />}
+      {chair && <Chair position={[0, 0, CHAIR_POSE.deskOffset]} />}
       {(variant === "developer" || variant === "rockstar") && (
         <>
           <ExtraMonitor position={[0.96, 1.13, -0.27]} rotation={-0.2} />

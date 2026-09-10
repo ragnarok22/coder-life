@@ -1,4 +1,5 @@
 import type { Obstacle, Vec2 } from "../game/types";
+import { chairPose } from "./pose-anchors";
 
 export const OFFICE_SIZE = { w: 30, d: 20 };
 export const OFFICE_ENTRANCE: Vec2 = [0, 7.2];
@@ -61,6 +62,7 @@ export const officeDesks: OfficeDesk[] = [
     variant: "tidy",
   },
 ];
+export const playerChairPose = chairPose(officeDesks.find((d) => d.player)!);
 export interface OfficeArea {
   id: string;
   name: string;

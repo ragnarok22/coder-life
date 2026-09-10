@@ -65,6 +65,7 @@ export default function GameScene() {
           gravity={[0, -9.81, 0]}
           paused={paused}
           timeStep={1 / 60}
+          updatePriority={-2}
           debug={import.meta.env.DEV && debug.colliders}
         >
           <World location={location} />

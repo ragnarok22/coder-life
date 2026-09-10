@@ -4,6 +4,7 @@ import { unlockAchievements } from "../data/achievements";
 import { evaluateEnding } from "../data/endings";
 import type { Conditions, Effects, GameData, TimeCategory } from "./types";
 import { createMembershipIndex } from "./membership-index";
+import { HOME_BED } from "../data/pose-anchors";
 
 const conditionFlagMembership = createMembershipIndex<string>();
 const cancellationMembership = createMembershipIndex<string>();
@@ -39,7 +40,7 @@ function rewardTasks(g: GameData): GameData {
 export const initialGame = (seed = 1): GameData => ({
   day: 1,
   location: "home",
-  position: [-1.7, -2],
+  position: [...HOME_BED.wakePosition],
   minutes: DAY.start,
   energy: 78,
   stress: 5,

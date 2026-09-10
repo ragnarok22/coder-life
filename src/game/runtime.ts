@@ -5,6 +5,9 @@ export const runtime = {
   player: [-1.7, -2] as Vec2,
   yaw: 0,
   animation: "idle" as AnimationState,
+  seated: false,
+  active: true,
+  seatHeight: 0.62,
   speed: 0,
   playerHeight: 0.8,
   movementContacts: [] as {

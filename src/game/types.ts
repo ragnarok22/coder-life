@@ -3,7 +3,7 @@ export type Vec2 = [number, number];
 export type Location = "home" | "commute" | "office";
 export type Screen = "menu" | "playing" | "paused" | "results";
 export type AnimationState =
-  "idle" | "walk" | "run" | "sit" | "typing" | "talk";
+  "idle" | "walk" | "run" | "sit" | "typing" | "talk" | "sleep";
 export type NpcState =
   | "idle"
   | "walking"
@@ -19,6 +19,8 @@ export interface AnimationSample {
   animation: AnimationState;
   speed: number;
   active?: boolean;
+  seated?: boolean;
+  seatHeight?: number;
   gesture?: "coffee" | "chat" | null;
 }
 export interface Effects {

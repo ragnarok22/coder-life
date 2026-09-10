@@ -94,6 +94,20 @@ export function Npc({
             ? "chat"
             : null;
     }
+    // The dialogue can start in this frame while the physics step is paused.
+    const dialogue = useGame.getState().game.dialogue;
+    if (dialogue) {
+      pose.speed = 0;
+      pose.animation = getEncounter(dialogue)?.npc === npc.id ? "talk" : "idle";
+      pose.gesture = pose.animation === "talk" ? "chat" : null;
+    }
+    pose.seated =
+      !!npc.seated &&
+      Math.hypot(
+        brain.position[0] - npc.desk[0],
+        brain.position[1] - npc.desk[1],
+      ) < 0.3 &&
+      (pose.animation === "typing" || !!dialogue);
     if (group.current) {
       group.current.position.y +=
         (groundHeight(brain.position, "office") - group.current.position.y) *
@@ -117,7 +131,7 @@ export function Npc({
       y: 0.8 + groundHeight(brain.position, "office"),
       z: brain.position[1],
     });
-  });
+  }, -1);
   return (
     <>
       <RigidBody

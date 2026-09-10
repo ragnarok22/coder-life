@@ -15,6 +15,7 @@ import { Mug } from "../rendering/props";
 import { StaticMesh } from "../rendering/static-mesh";
 import { Hair, HeadAccessories, OutfitDetails } from "./character-parts";
 import { damp } from "../game/locomotion";
+import { CHAIR_POSE } from "../data/pose-anchors";
 
 const GlbCharacter = lazy(() => import("./glb-character"));
 interface Props {
@@ -56,11 +57,21 @@ export function Character({
   const root = useRef<Group>(null),
     leftLeg = useRef<Group>(null),
     rightLeg = useRef<Group>(null),
+    leftKnee = useRef<Group>(null),
+    rightKnee = useRef<Group>(null),
     leftArm = useRef<Group>(null),
     rightArm = useRef<Group>(null),
     coffee = useRef<Group>(null);
   const location = useMemo(() => new Vector3(), []);
-  const motion = useRef({ phase: 0, weight: 0, seated: 0, run: 0, time: 0 }),
+  const motion = useRef({
+      phase: 0,
+      weight: 0,
+      seated: 0,
+      typing: 0,
+      sleep: 0,
+      run: 0,
+      time: 0,
+    }),
     frameBudget = useRef(0);
   useFrame(({ camera }, delta) => {
     const state = sample?.();
@@ -78,16 +89,14 @@ export function Character({
       return;
     const elapsed = frameBudget.current;
     frameBudget.current = 0;
-    const activeAnimation = state?.animation ?? animation;
-    const speed =
-      state?.speed ??
-      (moving?.()
-        ? M.walkSpeed
-        : activeAnimation === "walk"
-          ? M.walkSpeed
-          : activeAnimation === "run"
-            ? M.runSpeed
-            : 0);
+    const activeAnimation =
+      state?.animation ??
+      (animation === "idle" && moving?.() ? "walk" : animation);
+    // A stationary pose wins over a stale velocity sample when physics is paused.
+    const locomotion = activeAnimation === "walk" || activeAnimation === "run";
+    const speed = locomotion
+      ? (state?.speed ?? (activeAnimation === "run" ? M.runSpeed : M.walkSpeed))
+      : 0;
     const s = motion.current;
     s.time += elapsed;
     s.phase += speed * elapsed * 4.7;
@@ -99,21 +108,46 @@ export function Character({
     );
     s.run = damp(
       s.run,
-      activeAnimation === "run" ? 1 : 0,
+      activeAnimation === "run" && speed > M.idleThreshold ? 1 : 0,
       M.animationBlend,
       elapsed,
     );
     s.seated = damp(
       s.seated,
-      activeAnimation === "typing" || activeAnimation === "sit" ? 1 : 0,
+      (state?.seated ??
+        (activeAnimation === "typing" || activeAnimation === "sit"))
+        ? 1
+        : 0,
       10,
+      elapsed,
+    );
+    s.typing = damp(
+      s.typing,
+      activeAnimation === "typing" ? 1 : 0,
+      M.animationBlend,
+      elapsed,
+    );
+    s.sleep = damp(
+      s.sleep,
+      activeAnimation === "sleep" ? 1 : 0,
+      M.animationBlend,
       elapsed,
     );
     const swing = Math.sin(s.phase) * (0.46 + s.run * 0.2) * s.weight;
     if (leftLeg.current)
-      leftLeg.current.rotation.x = swing * (1 - s.seated) - 1.1 * s.seated;
+      leftLeg.current.rotation.x =
+        swing * (1 - s.seated) +
+        CHAIR_POSE.seatedHipAngle * s.seated +
+        0.1 * s.sleep;
     if (rightLeg.current)
-      rightLeg.current.rotation.x = -swing * (1 - s.seated) - 1.1 * s.seated;
+      rightLeg.current.rotation.x =
+        -swing * (1 - s.seated) +
+        CHAIR_POSE.seatedHipAngle * s.seated +
+        0.1 * s.sleep;
+    if (leftKnee.current)
+      leftKnee.current.rotation.x = -CHAIR_POSE.seatedHipAngle * s.seated;
+    if (rightKnee.current)
+      rightKnee.current.rotation.x = -CHAIR_POSE.seatedHipAngle * s.seated;
     const gesture =
       activeAnimation === "talk" ? Math.sin(s.time * 3) * 0.16 - 0.35 : 0;
     if (leftArm.current)
@@ -121,9 +155,9 @@ export function Character({
         leftArm.current.rotation.x,
         a.accessories.includes("tablet")
           ? -0.8
-          : s.seated
-            ? -0.98 + Math.sin(s.time * 16) * 0.045
-            : -swing * 0.7 + gesture,
+          : (-swing * 0.7 + gesture) * (1 - s.typing) +
+              (CHAIR_POSE.typingArmAngle + Math.sin(s.time * 16) * 0.02) *
+                s.typing,
         12,
         elapsed,
       );
@@ -132,15 +166,18 @@ export function Character({
         rightArm.current.rotation.x,
         state?.gesture === "coffee" || a.accessories.includes("coffee-cup")
           ? -1.15
-          : s.seated
-            ? -0.98 + Math.cos(s.time * 16) * 0.045
-            : swing * 0.7 - gesture,
+          : (swing * 0.7 - gesture) * (1 - s.typing) +
+              (CHAIR_POSE.typingArmAngle + Math.cos(s.time * 16) * 0.02) *
+                s.typing,
         12,
         elapsed,
       );
     if (root.current) {
       root.current.position.y =
-        -0.14 * s.seated + Math.abs(Math.sin(s.phase)) * s.weight * 0.025;
+        ((state?.seatHeight ?? CHAIR_POSE.seatHeight) -
+          CHAIR_POSE.hipHeight * BODY_SCALES[a.body][1]) *
+          s.seated +
+        Math.abs(Math.sin(s.phase)) * s.weight * 0.025;
       root.current.rotation.x = damp(
         root.current.rotation.x,
         a.visualTag === "visionary" ? -0.035 : s.run * 0.07,
@@ -160,7 +197,12 @@ export function Character({
     );
   const key = JSON.stringify(a);
   return (
-    <group ref={root} scale={BODY_SCALES[a.body]} key={key}>
+    <group
+      ref={root}
+      name="character-model"
+      scale={BODY_SCALES[a.body]}
+      key={key}
+    >
       <StaticMesh>
         <Box
           position={[0, 0.86, 0]}
@@ -201,27 +243,45 @@ export function Character({
         <HeadAccessories appearance={a} />
       </StaticMesh>
       {[
-        { side: -1, ref: leftLeg },
-        { side: 1, ref: rightLeg },
-      ].map(({ side, ref }) => (
-        <group key={side} ref={ref} position={[side * 0.17, 0.56, 0]}>
+        { side: -1, ref: leftLeg, knee: leftKnee },
+        { side: 1, ref: rightLeg, knee: rightKnee },
+      ].map(({ side, ref, knee }) => (
+        <group
+          key={side}
+          ref={ref}
+          name={side === -1 ? "left-hip" : "right-hip"}
+          position={[side * 0.17, CHAIR_POSE.hipHeight, 0]}
+        >
           <StaticMesh>
             <Box
-              position={[0, -0.22, 0]}
-              size={[0.23, 0.49, 0.28]}
+              position={[0, -0.1, 0]}
+              size={[0.23, 0.24, 0.28]}
               color={pants}
             />
-            <Box
-              position={[0, -0.47, 0.07]}
-              size={[0.26, a.shoes === "boots" ? 0.19 : 0.14, 0.43]}
-              color={p.shoes}
-            />
-            <Box
-              position={[0, -0.53, 0.07]}
-              size={[0.27, 0.045, 0.44]}
-              color={a.shoes === "loafers" ? "#4f5048" : "#e9e2cf"}
-            />
           </StaticMesh>
+          <group
+            ref={knee}
+            name={side === -1 ? "left-knee" : "right-knee"}
+            position={[0, -CHAIR_POSE.kneeOffset, 0]}
+          >
+            <StaticMesh>
+              <Box
+                position={[0, -0.115, 0]}
+                size={[0.23, 0.27, 0.28]}
+                color={pants}
+              />
+              <Box
+                position={[0, -0.245, 0.07]}
+                size={[0.26, a.shoes === "boots" ? 0.19 : 0.14, 0.43]}
+                color={p.shoes}
+              />
+              <Box
+                position={[0, -0.305, 0.07]}
+                size={[0.27, 0.045, 0.44]}
+                color={a.shoes === "loafers" ? "#4f5048" : "#e9e2cf"}
+              />
+            </StaticMesh>
+          </group>
         </group>
       ))}
       {[

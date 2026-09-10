@@ -6,6 +6,7 @@ import {
   officePartitions,
   officeSteps,
 } from "./office-layout";
+import { HOME_BED } from "./pose-anchors";
 
 export const OFFICE_DESKS = officeDesks.map((d) => d.position);
 export function groundHeight(position: Vec2, location: Location) {
@@ -43,7 +44,13 @@ export const obstacles: Record<Location, Obstacle[]> = {
   ],
   home: [
     ...walls(12, 10),
-    { x: -3.6, z: -2.7, w: 2.3, d: 3.4, h: 0.65 },
+    {
+      x: HOME_BED.center[0],
+      z: HOME_BED.center[1],
+      w: HOME_BED.frame.size[0],
+      d: HOME_BED.frame.size[2],
+      h: HOME_BED.frame.centerY + HOME_BED.frame.size[1] / 2 + 0.05,
+    },
     { x: 3.6, z: -3.8, w: 3, d: 1, h: 1.2 },
     { x: -3.8, z: 2, w: 2.8, d: 1.2, h: 0.8 },
     { x: 0.5, z: -3, w: 0.18, d: 4, h: 2.6 },
