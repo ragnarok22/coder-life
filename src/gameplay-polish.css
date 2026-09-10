@@ -384,12 +384,16 @@
   background: none;
   padding: 0;
 }
-.dev-panel label {
+.dev-panel label,
+.dev-panel .dev-control-row {
   display: flex;
   gap: 10px;
   align-items: center;
   font: 9px var(--mono);
   margin: 12px 0;
+}
+.dev-panel .dev-control-row > label {
+  margin: 0;
 }
 .dev-panel input {
   min-width: 0;
