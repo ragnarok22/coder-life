@@ -202,6 +202,22 @@ svg {
   background: var(--line);
   margin: 0 8px;
 }
+.github-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 35px;
+  min-height: 35px;
+  padding: 8px;
+  border-radius: 7px;
+  color: var(--green);
+  font: 10px var(--mono);
+  white-space: nowrap;
+}
+.github-link:hover {
+  background: #e8e9dc;
+}
 .menu-hero {
   position: relative;
   display: grid;
@@ -2063,6 +2079,9 @@ kbd {
   }
   .header-right {
     gap: 6px;
+  }
+  .github-link > span {
+    display: none;
   }
   .menu-hero {
     grid-template-columns: 1fr;
