@@ -13,6 +13,7 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
+    "test:seo": "playwright test --config playwright.seo.config.ts",
     "preview": "vite preview"
   },
   "dependencies": {
