@@ -24,6 +24,7 @@ import { objects } from "../data/world";
 import { MiniMap } from "./mini-map";
 import { audio } from "../game/audio";
 import { input } from "../game/input";
+import type { GameData, Interruption, NpcDefinition } from "../game/types";
 
 function WorkPanel() {
   const game = useGame((s) => s.game);
@@ -126,6 +127,51 @@ function WorkPanel() {
     </section>
   );
 }
+function DialogueHeader({
+  interruption,
+  npc,
+}: {
+  interruption: Interruption;
+  npc: NpcDefinition | undefined;
+}) {
+  return (
+    <div className="dialogue-top">
+      <div
+        className="npc-avatar"
+        style={{ background: npc?.color ?? "#d4a566" }}
+      >
+        {npc?.name[0] ??
+          (interruption.npc === "system" ? <Terminal size={23} /> : "N")}
+        <span>!</span>
+      </div>
+      <div>
+        <span className="eyebrow">
+          {interruption.category === "meeting"
+            ? "THIS COULD HAVE BEEN AN EMAIL"
+            : interruption.category === "coding"
+              ? "A DECISION FOR FUTURE YOU"
+              : "AN UNSCHEDULED SIDE QUEST"}
+        </span>
+        <h3>
+          {npc?.name ??
+            (interruption.npc === "system"
+              ? "Your code"
+              : "Your neighbor")}{" "}
+          <span>
+            ·{" "}
+            {npc?.role ??
+              (interruption.npc === "system"
+                ? "Engineering"
+                : "Also not your job")}
+          </span>
+        </h3>
+      </div>
+      <span className="dialogue-pause">
+        <Pause size={12} /> CLOCK PAUSED
+      </span>
+    </div>
+  );
+}
 function Dialogue() {
   const id = useGame((s) => s.game.dialogue);
   const screen = useGame((s) => s.screen);
@@ -150,41 +196,7 @@ function Dialogue() {
         useGame.getState().pause();
       }}
     >
-      <div className="dialogue-top">
-        <div
-          className="npc-avatar"
-          style={{ background: npc?.color ?? "#d4a566" }}
-        >
-          {npc?.name[0] ??
-            (interruption.npc === "system" ? <Terminal size={23} /> : "N")}
-          <span>!</span>
-        </div>
-        <div>
-          <span className="eyebrow">
-            {interruption.category === "meeting"
-              ? "THIS COULD HAVE BEEN AN EMAIL"
-              : interruption.category === "coding"
-                ? "A DECISION FOR FUTURE YOU"
-                : "AN UNSCHEDULED SIDE QUEST"}
-          </span>
-          <h3>
-            {npc?.name ??
-              (interruption.npc === "system"
-                ? "Your code"
-                : "Your neighbor")}{" "}
-            <span>
-              ·{" "}
-              {npc?.role ??
-                (interruption.npc === "system"
-                  ? "Engineering"
-                  : "Also not your job")}
-            </span>
-          </h3>
-        </div>
-        <span className="dialogue-pause">
-          <Pause size={12} /> CLOCK PAUSED
-        </span>
-      </div>
+      <DialogueHeader interruption={interruption} npc={npc} />
       {npc && (
         <p className="relationship-hint" title={npc.personality?.description}>
           Trust:{" "}
@@ -252,28 +264,113 @@ function TouchControls() {
     </div>
   );
 }
+function ObjectiveCard({ game }: { game: GameData }) {
+  let objective = "REACH YOUR DESK";
+  if (game.hidingZone)
+    objective = `LAY LOW · ${Math.ceil(game.hiddenUntil - game.minutes)} MIN`;
+  else if (!game.awake) objective = "GET OUT OF BED";
+  else if (game.location === "home") objective = "GET TO WORK";
+  else if (game.location === "commute") objective = "WALK TO THE OFFICE";
+  else if (game.productivity >= 100) objective = "SURVIVE UNTIL 17:00";
+  else if (game.working) objective = "SHIP SOMETHING. ANYTHING.";
+  else if (game.energy < 25) objective = "REFUEL AT THE KITCHEN";
+  return (
+    <div className="objective-card">
+      <span className="eyebrow">
+        <span className="live-dot" /> YOUR OBJECTIVE
+      </span>
+      <strong>{objective}</strong>
+      <span className="objective-detail">
+        {game.location === "home"
+          ? "An exciting new day of existing."
+          : game.location === "commute"
+            ? "Follow the path. Avoid eye contact."
+            : `${tasksComplete(game)}/${taskNames(game).length} tasks · ${game.stats.interruptions} interruptions · ${game.stats.evaded} evaded`}
+      </span>
+      {game.coffeeUntil > game.minutes && (
+        <span className="coffee-buff">
+          <Coffee size={12} /> Java boost ·{" "}
+          {Math.ceil(game.coffeeUntil - game.minutes)} min
+        </span>
+      )}
+      {game.minutes >= game.deadline - 60 && game.productivity < 100 && (
+        <span className="deadline-note">
+          Delivery {clock(game.deadline)} ·{" "}
+          {Math.max(0, Math.ceil(game.deadline - game.minutes))} min left.
+          Protect your focus.
+        </span>
+      )}
+    </div>
+  );
+}
+function InteractionPromptContent({
+  game,
+  nearest,
+}: {
+  game: GameData;
+  nearest: string | null;
+}) {
+  const nearestObject = objects.find((o) => o.id === nearest),
+    npc = npcs.find((n) => `npc:${n.id}` === nearest);
+  if (game.hidingZone)
+    return (
+      <>
+        <div>
+          <span>STRATEGIC DISAPPEARANCE</span>
+          <strong>
+            {Math.max(0, Math.ceil(game.hiddenUntil - game.minutes))} min
+            remaining. Work is waiting.
+          </strong>
+        </div>
+        <button onClick={() => useGame.getState().stopHiding()}>
+          <kbd>E</kbd> Leave hiding spot
+        </button>
+      </>
+    );
+  if (!game.awake)
+    return (
+      <>
+        <span className="prompt-icon">
+          <Coffee size={19} />
+        </span>
+        <div>
+          <span>08:00. YOUR ALARM HAS NO MERCY.</span>
+          <strong>Another day. Another deadline.</strong>
+        </div>
+        <button onClick={() => useGame.getState().interact()}>
+          <kbd>E</kbd> Get up <ChevronRight size={15} />
+        </button>
+      </>
+    );
+  if (nearestObject || npc)
+    return (
+      <>
+        <span className="prompt-icon">
+          <Footprints size={19} />
+        </span>
+        <div>
+          <span>{npc ? npc.role : "INTERACT"}</span>
+          <strong>{npc ? `Talk to ${npc.name}` : nearestObject?.label}</strong>
+        </div>
+        <button onClick={() => useGame.getState().interact()}>
+          <kbd>E</kbd> {npc ? "Talk" : nearestObject?.action}{" "}
+          <ChevronRight size={15} />
+        </button>
+      </>
+    );
+  return (
+    <div className="explore-hint">
+      <kbd>WASD</kbd> Move <span>·</span>
+      <kbd>DRAG</kbd> Look <span>·</span>
+      <kbd>SHIFT</kbd> Move faster
+    </div>
+  );
+}
 export function Hud() {
   const game = useGame((s) => s.game),
     nearest = useGame((s) => s.nearest),
     toast = useGame((s) => s.toast),
     status = useGame((s) => s.saveStatus);
-  const nearestObject = objects.find((o) => o.id === nearest),
-    npc = npcs.find((n) => `npc:${n.id}` === nearest);
-  const objective = game.hidingZone
-    ? `LAY LOW · ${Math.ceil(game.hiddenUntil - game.minutes)} MIN`
-    : !game.awake
-      ? "GET OUT OF BED"
-      : game.location === "home"
-        ? "GET TO WORK"
-        : game.location === "commute"
-          ? "WALK TO THE OFFICE"
-          : game.productivity >= 100
-            ? "SURVIVE UNTIL 17:00"
-            : game.working
-              ? "SHIP SOMETHING. ANYTHING."
-              : game.energy < 25
-                ? "REFUEL AT THE KITCHEN"
-                : "REACH YOUR DESK";
   useEffect(() => {
     if (!toast) return;
     const timer = setTimeout(() => useGame.setState({ toast: null }), 7000);
@@ -345,32 +442,7 @@ export function Hud() {
           </button>
         </div>
       </header>
-      <div className="objective-card">
-        <span className="eyebrow">
-          <span className="live-dot" /> YOUR OBJECTIVE
-        </span>
-        <strong>{objective}</strong>
-        <span className="objective-detail">
-          {game.location === "home"
-            ? "An exciting new day of existing."
-            : game.location === "commute"
-              ? "Follow the path. Avoid eye contact."
-              : `${tasksComplete(game)}/${taskNames(game).length} tasks · ${game.stats.interruptions} interruptions · ${game.stats.evaded} evaded`}
-        </span>
-        {game.coffeeUntil > game.minutes && (
-          <span className="coffee-buff">
-            <Coffee size={12} /> Java boost ·{" "}
-            {Math.ceil(game.coffeeUntil - game.minutes)} min
-          </span>
-        )}
-        {game.minutes >= game.deadline - 60 && game.productivity < 100 && (
-          <span className="deadline-note">
-            Delivery {clock(game.deadline)} ·{" "}
-            {Math.max(0, Math.ceil(game.deadline - game.minutes))} min left.
-            Protect your focus.
-          </span>
-        )}
-      </div>
+      <ObjectiveCard game={game} />
       {toast && !game.dialogue && (
         <div className="game-toast" role="status">
           <span className="toast-icon">
@@ -392,55 +464,7 @@ export function Hud() {
         <>
           <MiniMap />
           <div className="interaction-prompt">
-            {game.hidingZone ? (
-              <>
-                <div>
-                  <span>STRATEGIC DISAPPEARANCE</span>
-                  <strong>
-                    {Math.max(0, Math.ceil(game.hiddenUntil - game.minutes))}{" "}
-                    min remaining. Work is waiting.
-                  </strong>
-                </div>
-                <button onClick={() => useGame.getState().stopHiding()}>
-                  <kbd>E</kbd> Leave hiding spot
-                </button>
-              </>
-            ) : !game.awake ? (
-              <>
-                <span className="prompt-icon">
-                  <Coffee size={19} />
-                </span>
-                <div>
-                  <span>08:00. YOUR ALARM HAS NO MERCY.</span>
-                  <strong>Another day. Another deadline.</strong>
-                </div>
-                <button onClick={() => useGame.getState().interact()}>
-                  <kbd>E</kbd> Get up <ChevronRight size={15} />
-                </button>
-              </>
-            ) : nearestObject || npc ? (
-              <>
-                <span className="prompt-icon">
-                  <Footprints size={19} />
-                </span>
-                <div>
-                  <span>{npc ? npc.role : "INTERACT"}</span>
-                  <strong>
-                    {npc ? `Talk to ${npc.name}` : nearestObject?.label}
-                  </strong>
-                </div>
-                <button onClick={() => useGame.getState().interact()}>
-                  <kbd>E</kbd> {npc ? "Talk" : nearestObject?.action}{" "}
-                  <ChevronRight size={15} />
-                </button>
-              </>
-            ) : (
-              <div className="explore-hint">
-                <kbd>WASD</kbd> Move <span>·</span>
-                <kbd>DRAG</kbd> Look <span>·</span>
-                <kbd>SHIFT</kbd> Move faster
-              </div>
-            )}
+            <InteractionPromptContent game={game} nearest={nearest} />
           </div>
         </>
       )}
