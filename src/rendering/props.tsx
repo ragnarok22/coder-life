@@ -119,17 +119,19 @@ export function Desk({
   rotation = 0,
   player = false,
   chair = true,
+  variant = "standard",
 }: {
   position: [number, number, number];
   rotation?: number;
   player?: boolean;
   chair?: boolean;
+  variant?: "standard" | "developer" | "rockstar" | "manager" | "tidy";
 }) {
   return (
     <group position={position} rotation={[0, rotation, 0]}>
       <Box
         position={[0, 1.04, 0]}
-        size={[2.8, 0.14, 1.3]}
+        size={[variant === "manager" ? 3.2 : 2.8, 0.14, 1.3]}
         color={player ? "#e1ba7c" : "#e2d5b6"}
       />
       {[-1.15, 1.15].map((x) => (
@@ -214,6 +216,83 @@ export function Desk({
         />
       )}
       {chair && <Chair position={[0, 0, 1.16]} />}
+      {(variant === "developer" || variant === "rockstar") && (
+        <>
+          <ExtraMonitor position={[0.96, 1.13, -0.27]} rotation={-0.2} />
+          {variant === "rockstar" && (
+            <ExtraMonitor position={[-1.18, 1.13, -0.25]} rotation={0.22} />
+          )}
+          <Box
+            position={[0, 1.13, -0.49]}
+            size={[1.8, 0.035, 0.04]}
+            color="#414c48"
+          />
+          <Box
+            position={[-0.6, 1.17, 0.26]}
+            size={[0.12, 0.015, 0.21]}
+            color={variant === "rockstar" ? "#c7769b" : "#84a5a0"}
+          />
+        </>
+      )}
+      {variant === "tidy" && (
+        <>
+          <Plant position={[1.06, 1.13, -0.24]} scale={0.32} />
+          <Box
+            position={[-1, 1.3, -0.25]}
+            size={[0.4, 0.35, 0.32]}
+            color="#91a978"
+          />
+          {[-1.12, -1, -0.88].map((x) => (
+            <Box
+              key={x}
+              position={[x, 1.35, -0.23]}
+              size={[0.04, 0.39, 0.29]}
+              color="#f0e9d0"
+            />
+          ))}
+        </>
+      )}
+      {variant === "manager" && (
+        <>
+          <Box
+            position={[1.28, 1.2, -0.15]}
+            size={[0.3, 0.12, 0.5]}
+            color="#986e49"
+          />
+          <Box
+            position={[-1.21, 1.14, 0]}
+            size={[0.5, 0.04, 0.45]}
+            color="#617b72"
+          />
+        </>
+      )}
+    </group>
+  );
+}
+function ExtraMonitor({
+  position,
+  rotation,
+}: {
+  position: [number, number, number];
+  rotation: number;
+}) {
+  return (
+    <group position={position} rotation={[0, rotation, 0]}>
+      <Box position={[0, 0.17, 0]} size={[0.05, 0.3, 0.06]} color="#465650" />
+      <Box position={[0, 0.5, 0]} size={[0.72, 0.6, 0.08]} color="#35413d" />
+      <Box
+        position={[0, 0.5, 0.045]}
+        size={[0.63, 0.51, 0.012]}
+        color="#294b48"
+      />
+      {[0, 1, 2].map((n) => (
+        <Box
+          key={n}
+          position={[-0.05, 0.65 - n * 0.12, 0.055]}
+          size={[0.36 + n * 0.055, 0.025, 0.006]}
+          color={n % 2 ? "#d9b573" : "#91c0a8"}
+        />
+      ))}
     </group>
   );
 }

@@ -1,24 +1,18 @@
 import { CuboidCollider, RigidBody } from "@react-three/rapier";
 import { Instances, Instance } from "@react-three/drei";
-import { bounds, obstacles, OFFICE_DESKS } from "../data/world";
+import { bounds, obstacles } from "../data/world";
 import type { Location } from "../game/types";
 import { Box, Sign } from "./primitives";
-import {
-  CoffeeStation,
-  Desk,
-  Plant,
-  Printer,
-  WaterCooler,
-  WindowPanel,
-} from "./props";
+import { Plant, WindowPanel } from "./props";
 import { Character } from "../entities/character";
+import { OfficeEnvironment } from "./office";
 
 function Floor({ location }: { location: Location }) {
   const { w, d } = bounds[location];
   return (
     <group>
       <Box position={[0, -0.2, 0]} size={[w, 0.4, d]} color="#a8ae95" />
-      <Instances limit={500} castShadow={false} receiveShadow>
+      <Instances limit={w * d} castShadow={false} receiveShadow>
         <boxGeometry args={[0.98, 0.018, 0.98]} />
         <meshStandardMaterial roughness={1} />
         {Array.from({ length: w }, (_, x) =>
@@ -43,113 +37,16 @@ function Floor({ location }: { location: Location }) {
           )),
         )}
       </Instances>
-      <Box position={[0, 1.5, -d / 2]} size={[w, 3, 0.2]} color="#d3dcc6" />
-      <Box position={[-w / 2, 1.5, 0]} size={[0.2, 3, d]} color="#c6d3bd" />
-      <Box position={[w / 2, 0.4, 0]} size={[0.2, 0.8, d]} color="#becbb4" />
-      <Box position={[0, 0.3, d / 2]} size={[w, 0.6, 0.2]} color="#c1cdb6" />
+      {obstacles[location].slice(0, 4).map((wall, i) => (
+        <Box
+          key={`${wall.x}:${wall.z}`}
+          position={[wall.x, wall.h / 2, wall.z]}
+          size={[wall.w, wall.h, wall.d]}
+          color={["#d3dcc6", "#c1cdb6", "#c6d3bd", "#becbb4"][i]}
+        />
+      ))}
       <Box position={[0, 3.05, -d / 2]} size={[w, 0.12, 0.3]} color="#73957a" />
     </group>
-  );
-}
-function Office() {
-  return (
-    <>
-      {[-8, -4, 0, 8].map((x) => (
-        <WindowPanel key={x} position={[x, 1.9, -8.86]} width={2.6} />
-      ))}
-      {OFFICE_DESKS.map(([x, z], i) => (
-        <Desk
-          key={`${x},${z}`}
-          position={[x, 0, z]}
-          player={i === 2}
-          rotation={i === 2 ? 0 : Math.PI}
-        />
-      ))}
-      <Sign
-        text="ENGINEERING"
-        position={[-5.8, 2.6, -8.8]}
-        width={2.8}
-        height={0.4}
-      />
-      <Sign
-        text="MONDAY, INC."
-        position={[0.5, 2.6, -8.8]}
-        width={3}
-        height={0.5}
-      />
-      <Sign
-        text="YOUR DESK"
-        position={[-6, 0.035, 3.4]}
-        rotation={[-Math.PI / 2, 0, 0]}
-        width={2}
-        height={0.5}
-        background="#8dae85"
-        color="#fff8e6"
-      />
-      <CoffeeStation position={[9.9, 0, 2.2]} />
-      <Box position={[10, 1, 6]} size={[1.5, 2, 1]} color="#dfdfc8" />
-      <Box
-        position={[10, 1.45, 6.52]}
-        size={[1.3, 0.025, 0.03]}
-        color="#929f8b"
-      />
-      <Sign text="LUNCH" position={[10, 2.4, 6]} width={1.5} height={0.4} />
-      <Printer position={[-10.5, 0, -5.5]} />
-      <WaterCooler position={[-10.8, 0, 1]} />
-      <Box position={[-8.5, 0.65, 6]} size={[3.4, 1.3, 1.4]} color="#82a18c" />
-      <Box position={[-8.5, 1.35, 6]} size={[3.6, 0.12, 1.6]} color="#ddc99f" />
-      <Sign
-        text="HELLO, HUMAN."
-        position={[-8.5, 0.85, 6.72]}
-        width={2.5}
-        height={0.4}
-      />
-      <Box
-        position={[5.5, 1.4, -5.8]}
-        size={[0.18, 2.8, 6.4]}
-        color="#b3c7b5"
-      />
-      <Box position={[9.5, 1.4, -1.8]} size={[5, 2.8, 0.18]} color="#c5d4c0" />
-      <Sign
-        text="QUICK SYNC"
-        position={[8.5, 2.2, -1.69]}
-        width={2.4}
-        height={0.45}
-      />
-      <Box position={[8, 1, -4.5]} size={[4, 0.15, 2]} color="#dfc797" />
-      {[-1.5, 1.5].map((x) => (
-        <Box
-          key={x}
-          position={[8 + x, 0.48, -4.5]}
-          size={[0.15, 0.95, 1.5]}
-          color="#728b73"
-        />
-      ))}
-      <Box position={[5, 1.25, 5.7]} size={[0.18, 2.5, 3]} color="#bccbb7" />
-      <Box
-        position={[2.9, 1.25, 7.2]}
-        size={[4.3, 2.5, 0.18]}
-        color="#cbd7c0"
-      />
-      <Sign
-        text="QUIET ZONE / WC"
-        position={[2.8, 2, 7.09]}
-        rotation={[0, Math.PI, 0]}
-        width={3}
-        height={0.4}
-      />
-      <Sign
-        text="SUPPORT"
-        position={[-10.82, 2, -4]}
-        rotation={[0, Math.PI / 2, 0]}
-        width={2}
-        height={0.4}
-      />
-      <Plant position={[-11, 0, -8]} />
-      <Plant position={[11, 0, -8]} />
-      <Plant position={[6.5, 0, 7.6]} />
-      <Plant position={[-10.5, 0, 8]} />
-    </>
   );
 }
 function Home() {
@@ -252,7 +149,7 @@ export function World({ location }: { location: Location }) {
       </RigidBody>
       <Floor location={location} />
       {location === "office" ? (
-        <Office />
+        <OfficeEnvironment />
       ) : location === "home" ? (
         <Home />
       ) : (

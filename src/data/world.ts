@@ -1,16 +1,17 @@
 import type { Location, Obstacle, WorldObject } from "../game/types";
+import {
+  OFFICE_SIZE,
+  officeDesks,
+  officeFurniture,
+  officePartitions,
+  officeSteps,
+} from "./office-layout";
 
-export const OFFICE_DESKS = [
-  [-6, -3],
-  [-2, -3],
-  [-6, 2],
-  [-2, 2],
-  [3, -5],
-] as const;
+export const OFFICE_DESKS = officeDesks.map((d) => d.position);
 export const bounds: Record<Location, { w: number; d: number }> = {
   home: { w: 12, d: 10 },
   commute: { w: 12, d: 18 },
-  office: { w: 24, d: 18 },
+  office: OFFICE_SIZE,
 };
 const walls = (w: number, d: number): Obstacle[] => [
   { x: 0, z: -d / 2, w, d: 0.25, h: 3 },
@@ -20,17 +21,13 @@ const walls = (w: number, d: number): Obstacle[] => [
 ];
 export const obstacles: Record<Location, Obstacle[]> = {
   office: [
-    ...walls(24, 18),
-    ...OFFICE_DESKS.map(([x, z]) => ({ x, z, w: 2.8, d: 1.3, h: 1.15 })),
-    { x: 8, z: -4.5, w: 4, d: 2, h: 1 },
-    { x: 5.5, z: -5.8, w: 0.18, d: 6.4, h: 2.8 },
-    { x: 9.5, z: -1.8, w: 5, d: 0.18, h: 2.8 },
-    { x: 9.9, z: 2.2, w: 2.5, d: 1, h: 1.3 },
-    { x: 10, z: 6, w: 2, d: 1, h: 1.2 },
-    { x: -8.5, z: 6, w: 3.4, d: 1.4, h: 1.4 },
-    { x: -10.5, z: -5.5, w: 1.2, d: 1.2, h: 1.3 },
-    { x: 5, z: 5.7, w: 0.18, d: 3, h: 2.5 },
-    { x: 2.9, z: 7.2, w: 4.3, d: 0.18, h: 2.5 },
+    ...walls(OFFICE_SIZE.w, OFFICE_SIZE.d).map((wall, index) => ({
+      ...wall,
+      h: index === 1 || index === 3 ? 0.8 : 3,
+    })),
+    ...officePartitions,
+    ...officeFurniture,
+    ...officeSteps,
   ],
   home: [
     ...walls(12, 10),
@@ -174,5 +171,33 @@ export const objects: WorldObject[] = [
     location: "office",
     kind: "inspect",
     description: "“My door is always open.” His calendar is not.",
+  },
+  {
+    id: "small-meeting",
+    label: "The five-minute room",
+    action: "Read the whiteboard",
+    position: [-4, -6.9],
+    location: "office",
+    kind: "inspect",
+    description: "“Parking lot.” A list of things nobody intends to revisit.",
+  },
+  {
+    id: "utility",
+    label: "Utility / server room",
+    action: "Check the blinking lights",
+    position: [-12.5, -6.8],
+    location: "office",
+    kind: "inspect",
+    description: "All green. Resist the urge to improve anything.",
+  },
+  {
+    id: "lounge",
+    label: "The decompression zone",
+    action: "Take a breather · 10 min",
+    position: [-2.4, 7.4],
+    location: "office",
+    kind: "rest",
+    effects: { minutes: 10, energy: 8, stress: -10 },
+    cooldown: 30,
   },
 ];

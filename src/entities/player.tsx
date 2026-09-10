@@ -7,7 +7,7 @@ import {
   useRapier,
 } from "@react-three/rapier";
 import type { RapierRigidBody } from "@react-three/rapier";
-import { Group, Vector3 } from "three";
+import type { Group } from "three";
 import { input } from "../game/input";
 import { runtime } from "../game/runtime";
 import { useGame } from "../game/store";
@@ -15,6 +15,17 @@ import { objects } from "../data/world";
 import { lineOfSight } from "../ai/navigation";
 import { Character } from "./character";
 import { audio } from "../game/audio";
+import {
+  PLAYER_MOTION as M,
+  THIRD_PERSON_CAMERA as C,
+} from "../data/presentation";
+import {
+  angleDifference,
+  createLocomotion,
+  stepLocomotion,
+  turnToward,
+} from "../game/locomotion";
+import { PlayerCamera } from "../rendering/player-camera";
 
 export function Player() {
   const body = useRef<RapierRigidBody>(null),
@@ -23,31 +34,20 @@ export function Player() {
   const controller = useRef<ReturnType<
     typeof world.createCharacterController
   > | null>(null);
-  const working = useGame((s) => s.game.working),
-    spawn = useGame((s) => s.game.position);
-  const vectors = useMemo(
-    () => ({
-      target: new Vector3(),
-      desired: new Vector3(),
-      direction: new Vector3(),
-    }),
-    [],
-  );
-  const ray = useMemo(
-    () => new rapier.Ray(vectors.target, vectors.direction),
-    [rapier, vectors],
-  );
-  const timer = useRef(0),
-    first = useRef(true),
-    moving = useRef(false);
+  const spawn = useGame((s) => s.game.position),
+    motion = useMemo(createLocomotion, []),
+    timer = useRef(0);
   useEffect(() => {
-    const c = world.createCharacterController(0.025);
-    c.enableAutostep(0.3, 0.2, true);
-    c.enableSnapToGround(0.3);
+    const c = world.createCharacterController(M.colliderOffset);
+    c.enableAutostep(M.stepHeight, M.stepWidth, true);
+    c.enableSnapToGround(M.snapDistance);
     c.setSlideEnabled(true);
     controller.current = c;
     input.yaw = 0;
-    input.pitch = 0.58;
+    input.pitch = C.pitch;
+    input.zoom = C.distance;
+    runtime.camera.yaw = 0;
+    runtime.speed = 0;
     input.reset();
     return () => {
       world.removeCharacterController(c);
@@ -60,154 +60,140 @@ export function Player() {
     const state = useGame.getState(),
       p = b.translation(),
       dt = world.timestep;
-    const canMove =
+    const allowed =
       state.screen === "playing" &&
       state.game.awake &&
       !state.game.dialogue &&
       !state.game.hidingZone &&
       !state.game.working;
-    let x = canMove
+    const x = allowed
       ? Number(input.held.has("right")) - Number(input.held.has("left"))
       : 0;
-    let z = canMove
+    const z = allowed
       ? Number(input.held.has("backward")) - Number(input.held.has("forward"))
       : 0;
-    const length = Math.hypot(x, z),
-      speed =
-        (input.held.has("run") ? 5 : 3) * (0.65 + state.game.energy / 285);
-    if (length) {
-      x /= length;
-      z /= length;
-    }
-    const dx = (x * Math.cos(input.yaw) + z * Math.sin(input.yaw)) * speed * dt;
-    const dz = (z * Math.cos(input.yaw) - x * Math.sin(input.yaw)) * speed * dt;
+    const running = input.held.has("run");
+    if (!allowed) {
+      motion.x = 0;
+      motion.z = 0;
+    } else
+      stepLocomotion(
+        motion,
+        x,
+        z,
+        runtime.camera.yaw,
+        running,
+        state.game.energy,
+        dt,
+      );
+    motion.vertical = c.computedGrounded()
+      ? -1
+      : Math.max(-M.terminalVelocity, motion.vertical - M.gravity * dt);
     c.computeColliderMovement(
       b.collider(0),
-      { x: dx, y: -9.81 * dt, z: dz },
+      { x: motion.x * dt, y: motion.vertical * dt, z: motion.z * dt },
       rapier.QueryFilterFlags.EXCLUDE_SENSORS,
       undefined,
       (collider) => collider.parent()?.handle !== b.handle,
     );
-    const m = c.computedMovement();
-    b.setNextKinematicTranslation({ x: p.x + m.x, y: p.y + m.y, z: p.z + m.z });
+    const movement = c.computedMovement();
+    b.setNextKinematicTranslation({
+      x: p.x + movement.x,
+      y: p.y + movement.y,
+      z: p.z + movement.z,
+    });
     runtime.player[0] = p.x;
     runtime.player[1] = p.z;
-    moving.current = length > 0;
+    runtime.speed = Math.hypot(movement.x, movement.z) / dt;
     runtime.animation = state.game.working
       ? "typing"
-      : length
-        ? input.held.has("run")
-          ? "run"
-          : "walk"
-        : "idle";
-    if (length) {
-      runtime.yaw = Math.atan2(dx, dz);
+      : state.game.dialogue
+        ? "talk"
+        : runtime.speed < M.idleThreshold
+          ? "idle"
+          : running && runtime.speed > M.walkSpeed * 0.9
+            ? "run"
+            : "walk";
+    if (runtime.speed > M.idleThreshold) {
+      const heading = Math.atan2(movement.x, movement.z),
+        angle = Math.abs(angleDifference(motion.heading, heading));
+      motion.heading = turnToward(
+        motion.heading,
+        heading,
+        angle > Math.PI * 0.65
+          ? M.reversalRotationSpeed
+          : running
+            ? M.runRotationSpeed
+            : M.walkRotationSpeed,
+        dt,
+      );
+      runtime.yaw = motion.heading;
       audio.play("step");
     }
   });
-  useFrame(({ camera }, dt) => {
+  useFrame((_, dt) => {
     const b = body.current;
     if (!b) return;
-    const p = b.translation(),
-      state = useGame.getState();
+    const state = useGame.getState(),
+      p = b.translation();
+    if (state.screen !== "playing" || state.game.dialogue) {
+      motion.x = 0;
+      motion.z = 0;
+      runtime.speed = 0;
+    }
     if (visual.current) {
-      const target = state.game.working ? Math.PI : runtime.yaw;
-      const angle = Math.atan2(
-        Math.sin(target - visual.current.rotation.y),
-        Math.cos(target - visual.current.rotation.y),
-      );
-      visual.current.rotation.y += angle * Math.min(1, dt * 12);
+      const heading = state.game.working ? Math.PI : motion.heading;
+      visual.current.rotation.y +=
+        angleDifference(visual.current.rotation.y, heading) *
+        (1 - Math.exp(-25 * dt));
     }
-    vectors.target.set(p.x, p.y + 0.55, p.z);
-    vectors.direction.set(
-      Math.sin(input.yaw) * Math.cos(input.pitch),
-      Math.sin(input.pitch),
-      Math.cos(input.yaw) * Math.cos(input.pitch),
-    );
-    let hit = world.castRay(
-      ray,
-      input.zoom,
-      true,
-      rapier.QueryFilterFlags.EXCLUDE_DYNAMIC |
-        rapier.QueryFilterFlags.EXCLUDE_KINEMATIC,
-    );
-    // In small hiding areas, lift over the wall before collapsing into the avatar's face.
-    if (hit && hit.timeOfImpact < 3) {
-      const elevatedPitch = Math.max(input.pitch, 1.05);
-      vectors.direction.set(
-        Math.sin(input.yaw) * Math.cos(elevatedPitch),
-        Math.sin(elevatedPitch),
-        Math.cos(input.yaw) * Math.cos(elevatedPitch),
-      );
-      hit = world.castRay(
-        ray,
-        input.zoom,
-        true,
-        rapier.QueryFilterFlags.EXCLUDE_DYNAMIC |
-          rapier.QueryFilterFlags.EXCLUDE_KINEMATIC,
-      );
-    }
-    const distance = hit ? Math.max(0.7, hit.timeOfImpact - 0.25) : input.zoom;
-    vectors.desired
-      .copy(vectors.target)
-      .addScaledVector(vectors.direction, distance);
-    camera.position.lerp(
-      vectors.desired,
-      first.current || distance < camera.position.distanceTo(vectors.target)
-        ? 1
-        : 1 - Math.exp(-dt * 7),
-    );
-    camera.lookAt(vectors.target);
-    first.current = false;
     timer.current += dt;
-    if (timer.current > 0.15) {
-      timer.current = 0;
-      let nearest: string | null = null,
-        distance = 2.1;
-      for (const o of objects) {
-        if (o.location !== state.game.location) continue;
-        const d = Math.hypot(p.x - o.position[0], p.z - o.position[1]);
-        if (
-          d < distance &&
-          lineOfSight([p.x, p.z], o.position, o.location, 0.02)
-        ) {
-          nearest = o.id;
-          distance = d;
-        }
+    if (timer.current < 0.15) return;
+    timer.current = 0;
+    let nearest: string | null = null,
+      distance = 2.1;
+    for (const o of objects) {
+      if (o.location !== state.game.location) continue;
+      const d = Math.hypot(p.x - o.position[0], p.z - o.position[1]);
+      if (
+        d < distance &&
+        lineOfSight([p.x, p.z], o.position, o.location, 0.02)
+      ) {
+        nearest = o.id;
+        distance = d;
       }
-      for (const [id, npc] of runtime.npcs) {
-        const d = Math.hypot(p.x - npc.position[0], p.z - npc.position[1]);
-        if (
-          d < Math.min(distance, 1.6) &&
-          lineOfSight([p.x, p.z], npc.position, "office")
-        ) {
-          nearest = `npc:${id}`;
-          distance = d;
-        }
-      }
-      if (state.nearest !== nearest) useGame.setState({ nearest });
     }
+    for (const [id, npc] of runtime.npcs) {
+      const d = Math.hypot(p.x - npc.position[0], p.z - npc.position[1]);
+      if (
+        d < Math.min(distance, 1.6) &&
+        lineOfSight([p.x, p.z], npc.position, "office")
+      ) {
+        nearest = `npc:${id}`;
+        distance = d;
+      }
+    }
+    if (state.nearest !== nearest) useGame.setState({ nearest });
   });
   return (
-    <RigidBody
-      ref={body}
-      type="kinematicPosition"
-      colliders={false}
-      position={[spawn[0], 0.86, spawn[1]]}
-      enabledRotations={[false, false, false]}
-    >
-      <CapsuleCollider args={[0.48, 0.3]} />
-      <group ref={visual} position={[0, -0.8, 0]}>
-        <Character
-          glasses
-          animation={working ? "typing" : "idle"}
-          moving={() => moving.current}
-        />
-      </group>
-      <mesh position={[0, -0.77, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[0.42, 0.49, 32]} />
-        <meshBasicMaterial color="#e8c669" transparent opacity={0.9} />
-      </mesh>
-    </RigidBody>
+    <>
+      <RigidBody
+        ref={body}
+        type="kinematicPosition"
+        colliders={false}
+        position={[spawn[0], 0.86, spawn[1]]}
+        enabledRotations={[false, false, false]}
+      >
+        <CapsuleCollider args={[M.halfHeight, M.radius]} />
+        <group ref={visual} position={[0, -0.8, 0]}>
+          <Character glasses sample={() => runtime} />
+        </group>
+        <mesh position={[0, -0.77, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <ringGeometry args={[0.42, 0.49, 32]} />
+          <meshBasicMaterial color="#e8c669" transparent opacity={0.9} />
+        </mesh>
+      </RigidBody>
+      <PlayerCamera target={visual} />
+    </>
   );
 }

@@ -1,3 +1,5 @@
+import { THIRD_PERSON_CAMERA as C } from "../data/presentation";
+
 export type Action =
   "forward" | "backward" | "left" | "right" | "run" | "interact" | "pause";
 export const bindings: Record<Action, string[]> = {
@@ -12,8 +14,8 @@ export const bindings: Record<Action, string[]> = {
 export const input = {
   held: new Set<Action>(),
   yaw: 0,
-  pitch: 0.55,
-  zoom: 7.5,
+  pitch: C.pitch as number,
+  zoom: C.distance as number,
   dragging: false,
   reset() {
     this.held.clear();
@@ -51,13 +53,16 @@ export function installInput(
     if (!input.dragging && !document.pointerLockElement) return;
     input.yaw -= e.movementX * 0.004 * sensitivity();
     input.pitch = Math.max(
-      0.18,
-      Math.min(1.1, input.pitch + e.movementY * 0.003 * sensitivity()),
+      C.minPitch,
+      Math.min(C.maxPitch, input.pitch + e.movementY * 0.003 * sensitivity()),
     );
   };
   const wheel = (e: WheelEvent) => {
     if ((e.target as HTMLElement).tagName === "CANVAS")
-      input.zoom = Math.max(3, Math.min(10, input.zoom + e.deltaY * 0.01));
+      input.zoom = Math.max(
+        C.minDistance,
+        Math.min(C.maxDistance, input.zoom + e.deltaY * 0.01),
+      );
   };
   const blur = () => input.reset();
   window.addEventListener("keydown", keydown);

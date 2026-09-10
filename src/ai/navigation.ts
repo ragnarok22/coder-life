@@ -1,6 +1,7 @@
 import { bounds, obstacles } from "../data/world";
 import type { Location, Vec2 } from "../game/types";
 import { BALANCE } from "../data/balance";
+import { PLAYER_MOTION } from "../data/presentation";
 
 const CELL = 0.65;
 export function walkable(p: Vec2, location: Location, radius = 0.35) {
@@ -9,9 +10,22 @@ export function walkable(p: Vec2, location: Location, radius = 0.35) {
     return false;
   return !obstacles[location].some(
     (o) =>
+      o.h > PLAYER_MOTION.stepHeight &&
       Math.abs(p[0] - o.x) < o.w / 2 + radius &&
       Math.abs(p[1] - o.z) < o.d / 2 + radius,
   );
+}
+export function nearestWalkable(position: Vec2, location: Location): Vec2 {
+  if (walkable(position, location)) return [...position];
+  for (let r = 0.3; r < 25; r += 0.3)
+    for (let i = 0; i < 24; i++) {
+      const p: Vec2 = [
+        position[0] + Math.cos((i * Math.PI) / 12) * r,
+        position[1] + Math.sin((i * Math.PI) / 12) * r,
+      ];
+      if (walkable(p, location)) return p;
+    }
+  return [0, 0];
 }
 export function lineOfSight(
   a: Vec2,
