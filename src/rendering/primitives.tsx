@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from "react";
 import { CanvasTexture, SRGBColorSpace } from "three";
 import type { ThreeElements } from "@react-three/fiber";
-import { matte, unitBox, unitCylinder } from "./shared-assets";
+import { matte, unitBox, cylinderFor } from "./shared-assets";
 
 type BoxProps = {
   position?: [number, number, number];
@@ -52,14 +52,10 @@ export function Cylinder({
       castShadow
       receiveShadow
       material={matte(color)}
-      geometry={top === undefined ? unitCylinder : undefined}
-      scale={top === undefined ? [radius, height, radius] : undefined}
-      dispose={top === undefined ? null : undefined}
-    >
-      {top !== undefined && (
-        <cylinderGeometry args={[top, radius, height, 10]} />
-      )}
-    </mesh>
+      geometry={cylinderFor((top ?? radius) / radius)}
+      scale={[radius, height, radius]}
+      dispose={null}
+    />
   );
 }
 export function Sign({

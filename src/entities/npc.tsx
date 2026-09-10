@@ -15,7 +15,7 @@ import type { NpcAppearance } from "../data/appearances";
 import type { AnimationSample } from "../game/types";
 import { angleDifference } from "../game/locomotion";
 import { sceneDebug } from "../game/scene-debug";
-import { groundHeight } from '../data/world';
+import { groundHeight } from "../data/world";
 
 export function Npc({
   definition: npc,
@@ -92,7 +92,9 @@ export function Npc({
             : null;
     }
     if (group.current) {
-      group.current.position.y += (groundHeight(brain.position,'office')-group.current.position.y)*(1-Math.exp(-22*delta));
+      group.current.position.y +=
+        (groundHeight(brain.position, "office") - group.current.position.y) *
+        (1 - Math.exp(-22 * delta));
       group.current.rotation.y +=
         angleDifference(group.current.rotation.y, brain.heading) *
         (1 - Math.exp(-12 * delta));
@@ -109,7 +111,7 @@ export function Npc({
     }
     body.current?.setNextKinematicTranslation({
       x: brain.position[0],
-      y: 0.8+groundHeight(brain.position,'office'),
+      y: 0.8 + groundHeight(brain.position, "office"),
       z: brain.position[1],
     });
   });
