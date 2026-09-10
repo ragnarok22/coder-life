@@ -106,11 +106,13 @@ test("camera rays track endpoints without streaming position buffers", async ({
           [2, 3, 0],
         ],
       ].entries()) {
+        // Advance the game's camera before supplying isolated rendering samples.
+        state.gl.setRenderTarget(previousTarget);
+        state.advance(index + 1);
         const [origin, desired, position] = endpoints;
         runtime.camera.target.splice(0, 3, ...origin);
         runtime.camera.desired.splice(0, 3, ...desired);
         runtime.camera.position.splice(0, 3, ...position);
-        state.advance(index + 1);
         referenceGeometry.setAttribute(
           "position",
           new BufferAttribute(
