@@ -4,7 +4,7 @@ import { Html } from "@react-three/drei";
 import { CapsuleCollider, RigidBody } from "@react-three/rapier";
 import type { RapierRigidBody } from "@react-three/rapier";
 import type { Group } from "three";
-import { Character } from "./Character";
+import { Character } from "./character";
 import type { NpcDefinition, NpcState, Vec2 } from "../game/types";
 import { useGame } from "../game/store";
 import { runtime } from "../game/runtime";

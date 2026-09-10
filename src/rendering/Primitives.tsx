@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { CanvasTexture, SRGBColorSpace } from "three";
 import type { ThreeElements } from "@react-three/fiber";
 
@@ -83,6 +83,7 @@ export function Sign({
     result.colorSpace = SRGBColorSpace;
     return result;
   }, [text, background, color]);
+  useEffect(() => () => texture.dispose(), [texture]);
   return (
     <mesh position={position} rotation={rotation}>
       <planeGeometry args={[width, height]} />

@@ -2,7 +2,7 @@ import { CuboidCollider, RigidBody } from "@react-three/rapier";
 import { Instances, Instance } from "@react-three/drei";
 import { bounds, obstacles, OFFICE_DESKS } from "../data/world";
 import type { Location } from "../game/types";
-import { Box, Sign } from "./Primitives";
+import { Box, Sign } from "./primitives";
 import {
   CoffeeStation,
   Desk,
@@ -10,8 +10,8 @@ import {
   Printer,
   WaterCooler,
   WindowPanel,
-} from "./Props";
-import { Character } from "../entities/Character";
+} from "./props";
+import { Character } from "../entities/character";
 
 function Floor({ location }: { location: Location }) {
   const { w, d } = bounds[location];
@@ -62,7 +62,7 @@ function Office() {
           key={i}
           position={[x, 0, z]}
           player={i === 2}
-          rotation={Math.PI}
+          rotation={i === 2 ? 0 : Math.PI}
         />
       ))}
       <Sign
@@ -79,7 +79,7 @@ function Office() {
       />
       <Sign
         text="YOUR DESK"
-        position={[-6, 0.035, 0.6]}
+        position={[-6, 0.035, 3.4]}
         rotation={[-Math.PI / 2, 0, 0]}
         width={2}
         height={0.5}
@@ -109,11 +109,7 @@ function Office() {
         size={[0.18, 2.8, 6.4]}
         color="#b3c7b5"
       />
-      <Box
-        position={[8.7, 1.4, -1.8]}
-        size={[6.6, 2.8, 0.18]}
-        color="#c5d4c0"
-      />
+      <Box position={[9.5, 1.4, -1.8]} size={[5, 2.8, 0.18]} color="#c5d4c0" />
       <Sign
         text="QUICK SYNC"
         position={[8.5, 2.2, -1.69]}

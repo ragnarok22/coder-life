@@ -2,9 +2,9 @@ import { Canvas } from "@react-three/fiber";
 import { Physics } from "@react-three/rapier";
 import { Suspense } from "react";
 import { useGame } from "../game/store";
-import { World } from "./World";
-import { Player } from "../entities/Player";
-import { Npc } from "../entities/Npc";
+import { World } from "./world";
+import { Player } from "../entities/player";
+import { Npc } from "../entities/npc";
 import { npcs } from "../data/content";
 
 export default function GameScene() {

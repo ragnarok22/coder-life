@@ -202,12 +202,23 @@ export const useGame = create<Store>((set, get) => ({
               matches(game, i.conditions) &&
               game.minutes >= (game.cooldowns[i.id] ?? 0),
           );
-          const event = eligible[Math.floor(Math.random() * eligible.length)];
-          if (
-            event &&
-            Math.random() < 0.65 + (game.futureChance[event.npc] ?? 0)
-          )
-            set({ seeking: event.id });
+          // Data-defined probability and previous decisions affect who asks next.
+          const weighted = eligible.map((event) => ({
+            event,
+            weight:
+              event.probability +
+              (game.futureChance[event.npc] ?? 0) +
+              Math.max(0, game.relations[event.npc] ?? 0) / 1000,
+          }));
+          const total = weighted.reduce((sum, entry) => sum + entry.weight, 0);
+          let roll = Math.random() * Math.max(1, total);
+          for (const entry of weighted) {
+            roll -= entry.weight;
+            if (roll <= 0) {
+              set({ seeking: entry.event.id });
+              break;
+            }
+          }
         }
         for (const event of randomEvents) {
           if (

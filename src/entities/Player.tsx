@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useMemo } from "react";
 import { useFrame } from "@react-three/fiber";
 import {
   CapsuleCollider,
@@ -13,7 +13,7 @@ import { runtime } from "../game/runtime";
 import { useGame } from "../game/store";
 import { objects } from "../data/world";
 import { lineOfSight } from "../ai/navigation";
-import { Character } from "./Character";
+import { Character } from "./character";
 import { audio } from "../game/audio";
 
 export function Player() {
@@ -25,9 +25,18 @@ export function Player() {
   > | null>(null);
   const working = useGame((s) => s.game.working),
     spawn = useGame((s) => s.game.position);
-  const cameraTarget = useRef(new Vector3()),
-    desired = useRef(new Vector3()),
-    direction = useRef(new Vector3());
+  const vectors = useMemo(
+    () => ({
+      target: new Vector3(),
+      desired: new Vector3(),
+      direction: new Vector3(),
+    }),
+    [],
+  );
+  const ray = useMemo(
+    () => new rapier.Ray(vectors.target, vectors.direction),
+    [rapier, vectors],
+  );
   const timer = useRef(0),
     first = useRef(true),
     moving = useRef(false);
@@ -101,20 +110,19 @@ export function Player() {
     const p = b.translation(),
       state = useGame.getState();
     if (visual.current) {
-      const target = state.game.working ? 0 : runtime.yaw;
+      const target = state.game.working ? Math.PI : runtime.yaw;
       const angle = Math.atan2(
         Math.sin(target - visual.current.rotation.y),
         Math.cos(target - visual.current.rotation.y),
       );
       visual.current.rotation.y += angle * Math.min(1, dt * 12);
     }
-    cameraTarget.current.set(p.x, p.y + 0.55, p.z);
-    direction.current.set(
+    vectors.target.set(p.x, p.y + 0.55, p.z);
+    vectors.direction.set(
       Math.sin(input.yaw) * Math.cos(input.pitch),
       Math.sin(input.pitch),
       Math.cos(input.yaw) * Math.cos(input.pitch),
     );
-    const ray = new rapier.Ray(cameraTarget.current, direction.current);
     const hit = world.castRay(
       ray,
       input.zoom,
@@ -123,17 +131,16 @@ export function Player() {
         rapier.QueryFilterFlags.EXCLUDE_KINEMATIC,
     );
     const distance = hit ? Math.max(0.7, hit.timeOfImpact - 0.25) : input.zoom;
-    desired.current
-      .copy(cameraTarget.current)
-      .addScaledVector(direction.current, distance);
+    vectors.desired
+      .copy(vectors.target)
+      .addScaledVector(vectors.direction, distance);
     camera.position.lerp(
-      desired.current,
-      first.current ||
-        distance < camera.position.distanceTo(cameraTarget.current)
+      vectors.desired,
+      first.current || distance < camera.position.distanceTo(vectors.target)
         ? 1
         : 1 - Math.exp(-dt * 7),
     );
-    camera.lookAt(cameraTarget.current);
+    camera.lookAt(vectors.target);
     first.current = false;
     timer.current += dt;
     if (timer.current > 0.15) {

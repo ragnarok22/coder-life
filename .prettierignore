@@ -1,4 +1,27 @@
+# Dependencies and caches
 node_modules/
+.pnpm-store/
+.cache/
+.vite/
+.vite-temp/
+.eslintcache
+.prettiercache
+*.tsbuildinfo
+
+# Build outputs and artifacts
 dist/
+dist-ssr/
+build/
+artifacts/
+*.tgz
+
+# Test results and coverage
 coverage/
+.nyc_output/
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
+# Generated lockfile
 pnpm-lock.yaml

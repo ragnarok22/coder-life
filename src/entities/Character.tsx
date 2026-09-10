@@ -4,7 +4,7 @@ import { useAnimations, useGLTF, Clone } from "@react-three/drei";
 import { useEffect } from "react";
 import type { Group } from "three";
 import type { AnimationState } from "../game/types";
-import { Box } from "../rendering/Primitives";
+import { Box } from "../rendering/primitives";
 
 // Drop-in asset path: locally hosted GLB files with idle/walk/run/sit/typing/talk clips.
 function GlbCharacter({

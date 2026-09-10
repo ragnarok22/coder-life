@@ -1,7 +1,7 @@
 import { Canvas } from "@react-three/fiber";
 import { ContactShadows, Html, OrbitControls } from "@react-three/drei";
 import { Suspense } from "react";
-import { Box, Cylinder, Sign } from "./Primitives";
+import { Box, Cylinder, Sign } from "./primitives";
 import {
   Chair,
   CoffeeStation,
@@ -11,8 +11,8 @@ import {
   Printer,
   WaterCooler,
   WindowPanel,
-} from "./Props";
-import { Character } from "../entities/Character";
+} from "./props";
+import { Character } from "../entities/character";
 import { useGame } from "../game/store";
 
 function Diorama() {
@@ -119,22 +119,12 @@ function Diorama() {
         size={[3.35, 0.015, 2.45]}
         color="#a8b89a"
       />
-      <Html
-        position={[3.5, 2.9, 0.8]}
-        center
-        distanceFactor={18}
-        zIndexRange={[5, 0]}
-      >
+      <Html position={[3.5, 2.9, 0.8]} center zIndexRange={[5, 0]}>
         <div className="scene-bubble">
           Got a minute? <span>👀</span>
         </div>
       </Html>
-      <Html
-        position={[-1.7, 2.65, 2.8]}
-        center
-        distanceFactor={18}
-        zIndexRange={[5, 0]}
-      >
+      <Html position={[-1.7, 2.65, 2.8]} center zIndexRange={[5, 0]}>
         <div className="focus-bubble">
           <span /> trying to focus...
         </div>

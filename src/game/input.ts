@@ -30,7 +30,8 @@ export function installInput(
       return;
     for (const [action, keys] of Object.entries(bindings))
       if (keys.includes(event.code)) {
-        if (action !== "pause") event.preventDefault();
+        if (action !== "pause" || !document.querySelector("dialog[open]"))
+          event.preventDefault();
         input.held.add(action as Action);
         if (!event.repeat && action === "interact") onInteract();
         if (!event.repeat && action === "pause") onPause();

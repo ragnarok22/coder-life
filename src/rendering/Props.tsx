@@ -1,4 +1,4 @@
-import { Box, Cylinder, Sign } from "./Primitives";
+import { Box, Cylinder, Sign } from "./primitives";
 
 export function Plant({
   position,

@@ -6,7 +6,27 @@ import tseslint from "typescript-eslint";
 import { defineConfig, globalIgnores } from "eslint/config";
 
 export default defineConfig([
-  globalIgnores(["dist"]),
+  globalIgnores([
+    "**/node_modules/",
+    "**/.pnpm-store/",
+    "**/.cache/",
+    "**/.vite/",
+    "**/.vite-temp/",
+    "**/.eslintcache",
+    "**/.prettiercache",
+    "**/*.tsbuildinfo",
+    "**/dist/",
+    "**/dist-ssr/",
+    "**/build/",
+    "**/artifacts/",
+    "**/*.tgz",
+    "**/coverage/",
+    "**/.nyc_output/",
+    "**/test-results/",
+    "**/playwright-report/",
+    "**/blob-report/",
+    "**/playwright/.cache/",
+  ]),
   {
     files: ["**/*.{ts,tsx}"],
     extends: [
