@@ -88,7 +88,7 @@ export default function SceneDebugOverlays() {
     <>
       {debug.camera && <CameraRays />}
       {cells.length > 0 && (
-        <Instances limit={cells.length} frustumCulled={false}>
+        <Instances limit={cells.length} frames={1} frustumCulled={false}>
           <boxGeometry args={[0.12, 0.025, 0.12]} />
           <meshBasicMaterial
             color="#59bba5"

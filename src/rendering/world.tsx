@@ -13,7 +13,7 @@ function Floor({ location }: { location: Location }) {
   return (
     <group>
       <Box position={[0, -0.2, 0]} size={[w, 0.4, d]} color="#a8ae95" />
-      <Instances limit={w * d} castShadow={false} receiveShadow>
+      <Instances limit={w * d} frames={1} castShadow={false} receiveShadow>
         <boxGeometry args={[0.98, 0.018, 0.98]} />
         <meshStandardMaterial roughness={1} />
         {Array.from({ length: w }, (_, x) =>
