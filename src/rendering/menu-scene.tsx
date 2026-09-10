@@ -14,6 +14,7 @@ import {
 } from "./props";
 import { Character } from "../entities/character";
 import { importantAppearances } from "../data/appearances";
+import { CHAIR_POSE } from "../data/pose-anchors";
 import { useGame } from "../game/store";
 
 function Diorama() {
@@ -75,13 +76,22 @@ function Diorama() {
       <Desk position={[-3.7, 0.1, -2.2]} />
       <Desk position={[0.2, 0.1, -2.2]} />
       <Desk position={[-1.7, 0.1, 1.65]} player />
-      <group position={[-1.7, 0.18, 2.82]} rotation={[0, Math.PI, 0]}>
+      <group
+        position={[-1.7, 0.1, 1.65 + CHAIR_POSE.deskOffset]}
+        rotation={[0, Math.PI, 0]}
+      >
         <Character glasses animation="typing" />
       </group>
-      <group position={[-3.7, 0.18, -0.95]} rotation={[0, Math.PI, 0]}>
+      <group
+        position={[-3.7, 0.1, -2.2 + CHAIR_POSE.deskOffset]}
+        rotation={[0, Math.PI, 0]}
+      >
         <Character appearance={importantAppearances.hr} animation="typing" />
       </group>
-      <group position={[0.2, 0.18, -0.95]} rotation={[0, Math.PI, 0]}>
+      <group
+        position={[0.2, 0.1, -2.2 + CHAIR_POSE.deskOffset]}
+        rotation={[0, Math.PI, 0]}
+      >
         <Character
           appearance={importantAppearances.accountant}
           animation="typing"
