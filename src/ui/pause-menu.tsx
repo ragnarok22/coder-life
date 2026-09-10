@@ -12,19 +12,24 @@ import { useGame } from "../game/store";
 import { Settings } from "./settings";
 import { Modal } from "./modal";
 import { clock } from "../game/rules";
+import { Journal } from "./journal";
 
 export function PauseMenu() {
-  const [panel, setPanel] = useState<"pause" | "settings" | "restart">("pause");
+  const [panel, setPanel] = useState<
+    "pause" | "settings" | "restart" | "journal"
+  >("pause");
   const game = useGame((s) => s.game),
     saveStatus = useGame((s) => s.saveStatus),
     saveError = useGame((s) => s.saveError);
   if (panel === "settings")
     return <Settings onClose={() => setPanel("pause")} />;
+  if (panel === "journal") return <Journal onClose={() => setPanel("pause")} />;
   if (panel === "restart")
     return (
       <Modal title="Try Monday again?" onClose={() => setPanel("pause")}>
         <p className="modal-copy">
-          Restart Day 1 at 08:00. Your current day will be replaced.
+          Restart Day 1 at 08:00 with a fresh set of possibilities. Your
+          achievements and best score stay with you.
         </p>
         <div className="button-row">
           <button
@@ -59,6 +64,12 @@ export function PauseMenu() {
         </div>
       </div>
       <div className="pause-actions">
+        <button
+          className="secondary-button"
+          onClick={() => setPanel("journal")}
+        >
+          Day journal · People, achievements & endings
+        </button>
         <button
           className="start-button"
           onClick={() => useGame.getState().resume()}

@@ -21,12 +21,13 @@ import { useGame } from "../game/store";
 import { Settings } from "./settings";
 import { fullscreen } from "./fullscreen";
 import { Modal } from "./modal";
+import { Journal } from "./journal";
 
 const MenuScene = lazy(() => import("../rendering/menu-scene"));
 export function MainMenu() {
-  const [overlay, setOverlay] = useState<"settings" | "about" | "new" | null>(
-    null,
-  );
+  const [overlay, setOverlay] = useState<
+    "settings" | "about" | "new" | "journal" | null
+  >(null);
   const hasSave = useGame((s) => s.hasSave),
     master = useGame((s) => s.preferences.master),
     saveError = useGame((s) => s.saveError);
@@ -124,6 +125,13 @@ export function MainMenu() {
             <HardDrive size={13} />
             <span>Saved locally. Your boss can’t see this.</span>
           </div>
+          <button
+            className="journal-menu-link"
+            onClick={() => setOverlay("journal")}
+          >
+            Day 1 Gameplay Polish <span>·</span> Journal & achievements{" "}
+            <ArrowUpRight size={12} />
+          </button>
         </div>
         <div className="hero-world">
           <div className="world-halo" />
@@ -231,6 +239,7 @@ export function MainMenu() {
         </div>
       )}
       {overlay === "settings" && <Settings onClose={() => setOverlay(null)} />}
+      {overlay === "journal" && <Journal onClose={() => setOverlay(null)} />}
       {overlay === "new" && (
         <Modal
           title="A fresh cup. A fresh start."
@@ -299,9 +308,10 @@ export function MainMenu() {
             </span>
           </div>
           <p className="fine-print">
-            A complete day lasts about 9 real minutes. All gameplay and saves
-            stay in your browser. Made with React, Three.js and Rapier. No
-            external assets or services required.
+            A normal day lasts about 12–18 real minutes. Coding decisions, trust
+            and shortcuts change each run. All gameplay and saves stay in your
+            browser. Made with React, Three.js and Rapier. No external assets or
+            services required.
           </p>
         </Modal>
       )}

@@ -5,7 +5,7 @@
 - Use pnpm. The build runs TypeScript directly via `node scripts/build.ts`; use Node 22.18+ or 24+.
 - `pnpm build` runs `tsc -b`, Vite, then menu prerendering. Calling Vite's build directly skips prerendering.
 - Checks: `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm test:coverage`. Typechecking covers `src/`, `scripts/`, and `vite.config.ts`, but not tests or Playwright/Vitest configs.
-- Focused unit test: `pnpm test tests/store.test.ts -t "pauses the clock"`. Vitest discovers only `tests/**/*.test.ts`; coverage is limited to rules, store, persistence, navigation, and event-director.
+- Focused unit test: `pnpm test tests/store.test.ts -t "pauses the clock"`. Vitest discovers only `tests/**/*.test.ts`; coverage includes rules, store, persistence/migration, navigation, NPC brain, profile, and event systems.
 - Unit tests run in Node. Storage tests import `fake-indexeddb/auto`; store tests mock audio and reset both Zustand state and `runtime.player` (see `tests/store.test.ts`).
 - Both Playwright suites require installed Google Chrome (`channel: "chrome"`). `pnpm test:e2e` starts/reuses Vite on port 5173 and excludes SEO tests. Focus a test with `pnpm test:e2e e2e/game.spec.ts -g "mobile menu"`.
 - Gameplay E2E imports the active store through Vite's `/src/game/store.ts` resource URL to accelerate the remaining day; it depends on the dev server. Keep acceleration in the test rather than changing production pacing.
@@ -23,6 +23,6 @@
 
 - `src/game/rules.ts` owns pure game transitions; `store.ts` orchestrates events, UI state, audio, and saves. High-frequency player/NPC state belongs in `src/game/runtime.ts`, outside React and persistent game state. `use-game-loop.ts` ticks rules every 250 ms; physics runs at 1/60 second.
 - World/save `Vec2` coordinates are `[x, z]`, not `[x, y]`. `src/data/world.ts` supplies shared navigation obstacles and physics geometry; object changes may also need visuals in `src/rendering/world.tsx`.
-- Content, NPC schedules, interruptions, and pacing belong in `src/data/content.ts`; eligibility and weighted selection live in `src/events/event-director.ts`. Only Day 1 is playable.
-- Saves use IndexedDB `coder-life` / `saves` / `current`, with a version-1 envelope validated in `src/game/persistence.ts`. Preferences use localStorage. Continue deliberately clears `working`; location/revision changes remount physics.
+- `src/data/content.ts` aggregates content; `balance.ts`, `personalities.ts`, `polish-content.ts`, and `coding-decisions.ts` hold Day 1 tuning and definitions. The event director owns the single dialogue/search slots; `encounter-engine.ts` resolves generic effects and bounded follow-up queues. Only Day 1 is playable.
+- Saves use IndexedDB `coder-life` / `saves` / `current`, with a version-2 envelope and version-1 migration in `src/game/save-migration.ts`. The career profile retains achievements, endings, best score and run summaries. Preferences use localStorage. Continue deliberately clears `working`; location/revision changes remount physics. Keep the time ledger equal to `minutes - dayStart` when constructing save fixtures or development time edits.
 - Source filenames use kebab-case. Use an intermediate filename for case-only renames on macOS.

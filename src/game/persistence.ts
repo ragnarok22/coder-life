@@ -1,10 +1,13 @@
-import type { GameData } from "./types";
+import type { CareerProfile, GameData } from "./types";
+import { initialProfile, recordProgress } from "./profile";
+import { migrateGame, migrateProfile } from "./save-migration";
 
 const DB = "coder-life";
 export interface SaveFile {
-  version: 1;
+  version: 2;
   savedAt: number;
   game: GameData;
+  profile: CareerProfile;
 }
 let database: Promise<IDBDatabase> | undefined;
 function open() {
@@ -33,10 +36,15 @@ async function transaction<T>(
       reject(tx.error ?? new Error("Save transaction interrupted"));
   });
 }
-export async function saveGame(game: GameData) {
+export async function saveGame(game: GameData, profile = initialProfile()) {
   await transaction("readwrite", (s) =>
     s.put(
-      { version: 1, savedAt: Date.now(), game } satisfies SaveFile,
+      {
+        version: 2,
+        savedAt: Date.now(),
+        game,
+        profile: recordProgress(profile, game),
+      } satisfies SaveFile,
       "current",
     ),
   );
@@ -45,7 +53,7 @@ export async function loadGame(): Promise<SaveFile | null> {
   const value = await transaction("readonly", (s) => s.get("current"));
   if (!value) return null;
   if (
-    value.version !== 1 ||
+    ![1, 2].includes(value.version) ||
     !value.game ||
     !["home", "commute", "office"].includes(value.game.location) ||
     !Number.isFinite(value.game.minutes) ||
@@ -62,7 +70,13 @@ export async function loadGame(): Promise<SaveFile | null> {
       "This save is incompatible or damaged. You can start a new day.",
     );
   }
-  return value as SaveFile;
+  const game = migrateGame(value.game, value.version);
+  return {
+    version: 2,
+    savedAt: value.savedAt,
+    game,
+    profile: migrateProfile(value.profile, game),
+  };
 }
 export async function resetSave() {
   await transaction("readwrite", (s) => s.delete("current"));

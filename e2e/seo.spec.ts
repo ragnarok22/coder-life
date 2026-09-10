@@ -1,6 +1,22 @@
+import { readdir, stat } from "node:fs/promises";
 import { test, expect } from "@playwright/test";
 
 const canonical = "https://example.com/coder-life/";
+
+test("production JavaScript chunks stay within the 500 kB budget", async () => {
+  const assets = new URL("../dist/assets/", import.meta.url);
+  const files = await readdir(assets);
+  const scripts = files.filter((file) => file.endsWith(".js"));
+  expect(scripts.length).toBeGreaterThan(0);
+  for (const file of scripts) {
+    const { size } = await stat(new URL(file, assets));
+    expect(
+      size,
+      `${file} exceeds the minified JavaScript budget`,
+    ).toBeLessThanOrEqual(500_000);
+  }
+  expect(files.filter((file) => file.endsWith(".wasm"))).toHaveLength(1);
+});
 
 test("production HTML is readable without JavaScript and includes complete SEO metadata", async ({
   browser,
@@ -71,9 +87,15 @@ test("the prerendered menu becomes interactive on desktop and mobile", async ({
   page,
 }, testInfo) => {
   const errors: string[] = [];
+  const requestedAssets: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
+  page.on("request", (request) => requestedAssets.push(request.url()));
   await page.setViewportSize({ width: 1440, height: 960 });
   await page.goto("/");
+  await expect(page.locator(".menu-canvas canvas")).toBeVisible();
+  expect(
+    requestedAssets.filter((url) => /rapier|\.wasm|glb-character/.test(url)),
+  ).toEqual([]);
   await page.getByRole("button", { name: "About the game" }).click();
   await expect(page.getByRole("dialog")).toBeVisible();
   await page.getByRole("button", { name: "Close", exact: true }).click();
@@ -94,9 +116,59 @@ test("the prerendered menu becomes interactive on desktop and mobile", async ({
     path: testInfo.outputPath("seo-mobile.png"),
     fullPage: true,
   });
+  const wasmResponse = page.waitForResponse((response) =>
+    new URL(response.url()).pathname.endsWith(".wasm"),
+  );
   await page.getByRole("button", { name: "New game", exact: true }).click();
+  const wasm = await wasmResponse;
+  expect(wasm.ok()).toBe(true);
+  expect(wasm.headers()["content-type"]).toContain("application/wasm");
+  expect(new URL(wasm.url()).origin).toBe(new URL(page.url()).origin);
+  expect((await wasm.body()).subarray(0, 4).toString("hex")).toBe("0061736d");
   await expect(page.getByRole("button", { name: /Get up/ })).toBeVisible({
     timeout: 30000,
   });
+  await expect(page.locator(".game-shell canvas")).toBeVisible();
+  expect(requestedAssets.filter((url) => /glb-character/.test(url))).toEqual(
+    [],
+  );
+  expect(errors).toEqual([]);
+});
+
+test("native physics loads and moves the player from a deployment subdirectory", async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  // Mount the same static output below a prefix, as a subdirectory host would.
+  const prefix = "/games/coder-life/";
+  await page.route(`**${prefix}**`, async (route) => {
+    const url = new URL(route.request().url());
+    url.pathname = url.pathname.replace(prefix, "/");
+    await route.fulfill({ response: await route.fetch({ url: url.href }) });
+  });
+  await page.goto(prefix);
+  await expect(page.locator(".menu-canvas canvas")).toBeVisible();
+  const wasmResponse = page.waitForResponse((response) =>
+    new URL(response.url()).pathname.endsWith(".wasm"),
+  );
+  await page.getByRole("button", { name: "New game", exact: true }).click();
+  const wasm = await wasmResponse;
+  expect(wasm.ok()).toBe(true);
+  expect(new URL(wasm.url()).pathname).toMatch(
+    /^\/games\/coder-life\/assets\/.+\.wasm$/,
+  );
+  await page.getByRole("button", { name: /Get up/ }).click();
+  const player = page
+    .getByRole("img", { name: /Local map/ })
+    .locator("circle[stroke]");
+  await expect(player).toHaveAttribute("cy", /-?\d/);
+  const startZ = Number(await player.getAttribute("cy"));
+  await expect
+    .poll(async () => {
+      await page.keyboard.press("s", { delay: 150 });
+      return Number(await player.getAttribute("cy"));
+    })
+    .toBeGreaterThan(startZ + 0.25);
   expect(errors).toEqual([]);
 });

@@ -64,6 +64,7 @@ export function Player() {
       state.screen === "playing" &&
       state.game.awake &&
       !state.game.dialogue &&
+      !state.game.hidingZone &&
       !state.game.working;
     let x = canMove
       ? Number(input.held.has("right")) - Number(input.held.has("left"))
@@ -83,7 +84,7 @@ export function Player() {
     c.computeColliderMovement(
       b.collider(0),
       { x: dx, y: -9.81 * dt, z: dz },
-      undefined,
+      rapier.QueryFilterFlags.EXCLUDE_SENSORS,
       undefined,
       (collider) => collider.parent()?.handle !== b.handle,
     );
@@ -123,13 +124,29 @@ export function Player() {
       Math.sin(input.pitch),
       Math.cos(input.yaw) * Math.cos(input.pitch),
     );
-    const hit = world.castRay(
+    let hit = world.castRay(
       ray,
       input.zoom,
       true,
       rapier.QueryFilterFlags.EXCLUDE_DYNAMIC |
         rapier.QueryFilterFlags.EXCLUDE_KINEMATIC,
     );
+    // In small hiding areas, lift over the wall before collapsing into the avatar's face.
+    if (hit && hit.timeOfImpact < 3) {
+      const elevatedPitch = Math.max(input.pitch, 1.05);
+      vectors.direction.set(
+        Math.sin(input.yaw) * Math.cos(elevatedPitch),
+        Math.sin(elevatedPitch),
+        Math.cos(input.yaw) * Math.cos(elevatedPitch),
+      );
+      hit = world.castRay(
+        ray,
+        input.zoom,
+        true,
+        rapier.QueryFilterFlags.EXCLUDE_DYNAMIC |
+          rapier.QueryFilterFlags.EXCLUDE_KINEMATIC,
+      );
+    }
     const distance = hit ? Math.max(0.7, hit.timeOfImpact - 0.25) : input.zoom;
     vectors.desired
       .copy(vectors.target)

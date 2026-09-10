@@ -1,35 +1,11 @@
-import { Suspense, useRef } from "react";
+import { lazy, Suspense, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
-import { useAnimations, useGLTF, Clone } from "@react-three/drei";
-import { useEffect } from "react";
 import type { Group } from "three";
 import type { AnimationState } from "../game/types";
 import { Box } from "../rendering/primitives";
 
-// Drop-in asset path: locally hosted GLB files with idle/walk/run/sit/typing/talk clips.
-function GlbCharacter({
-  url,
-  animation,
-}: {
-  url: string;
-  animation: AnimationState;
-}) {
-  const { scene, animations } = useGLTF(url, false);
-  const group = useRef<Group>(null);
-  const { actions } = useAnimations(animations, group);
-  useEffect(() => {
-    const action = actions[animation];
-    action?.reset().fadeIn(0.2).play();
-    return () => {
-      action?.fadeOut(0.2);
-    };
-  }, [actions, animation]);
-  return (
-    <group ref={group}>
-      <Clone object={scene} />
-    </group>
-  );
-}
+const GlbCharacter = lazy(() => import("./glb-character"));
+
 export function Character({
   color = "#689881",
   skin = "#e9b78e",

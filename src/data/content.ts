@@ -1,11 +1,15 @@
-import type { Interruption, NpcDefinition } from "../game/types";
+import type { Interruption, NpcDefinition, WorldEvent } from "../game/types";
+import { BALANCE } from "./balance";
+import { withPersonality } from "./personalities";
+import { extraInterruptions, polishEvents } from "./polish-content";
+import { codingDecisions } from "./coding-decisions";
 
 export const DAY = {
   id: 1,
   title: "Hello, real world.",
   role: "Junior Developer",
-  start: 480,
-  end: 1020,
+  start: BALANCE.dayStart,
+  end: BALANCE.dayEnd,
   target: 100,
   difficulty: 1,
   tasks: [
@@ -15,8 +19,8 @@ export const DAY = {
     "Ship it. Cross fingers.",
   ],
 };
-// One real minute = 60 game minutes. A full day takes about nine minutes.
-export const GAME_MINUTES_PER_SECOND = 1;
+// Eighteen uninterrupted real minutes; decisions consume part of the game-day directly.
+export const GAME_MINUTES_PER_SECOND = BALANCE.timeScale;
 export const CAREER = [
   { day: 1, role: "Junior Developer", meetingMultiplier: 1 },
   { day: 5, role: "Developer", meetingMultiplier: 1.2 },
@@ -35,7 +39,7 @@ const schedule: NpcDefinition["schedule"] = [
   { at: 840, goal: "player" },
   { at: 930, goal: "desk" },
 ];
-export const npcs: NpcDefinition[] = [
+const baseNpcs: NpcDefinition[] = [
   {
     id: "manager",
     name: "Mark",
@@ -122,7 +126,7 @@ export const npcs: NpcDefinition[] = [
   },
   {
     id: "cleaner",
-    name: "Pat",
+    name: "Parker",
     role: "Facilities",
     color: "#709bb3",
     skin: "#efc7a6",
@@ -133,7 +137,22 @@ export const npcs: NpcDefinition[] = [
     schedule,
   },
 ];
-export const interruptions: Interruption[] = [
+export const npcs: NpcDefinition[] = [
+  ...baseNpcs,
+  {
+    id: "senior",
+    name: "Pat",
+    role: "Senior Developer",
+    color: "#728ca0",
+    skin: "#e3b894",
+    hair: "#9d9a88",
+    position: [1, -2],
+    desk: [1, -2],
+    interactions: ["architecture", "senior-review"],
+    schedule,
+  },
+].map((npc) => withPersonality(npc as NpcDefinition));
+const baseInterruptions: Interruption[] = [
   {
     id: "commute",
     name: "Tech support, everywhere",
@@ -187,7 +206,7 @@ export const interruptions: Interruption[] = [
     id: "printer",
     name: "PC LOAD LETTER",
     category: "support",
-    npc: "sales",
+    npc: "accountant",
     dialogue:
       "The printer’s broken. I need these 200 slides for our paperless initiative.",
     probability: 0.14,
@@ -196,15 +215,56 @@ export const interruptions: Interruption[] = [
     choices: [
       {
         label: "Okay, I’ll take a look.",
-        hint: "−20 min · +5 stress · +3 relationship",
-        effects: { minutes: 20, stress: 5, relationship: 3, helped: 1 },
+        hint: "−15 min · +2 stress · +6 relationship",
+        effects: {
+          minutes: 15,
+          stress: 2,
+          relationship: 6,
+          helped: 1,
+          flag: "printer-fixed",
+          counters: { printerFixes: 1, basicFixes: 1 },
+          cancelFollowUps: ["printer-disaster", "manager-printer"],
+        },
         response: "There was no paper. There is now less time.",
       },
       {
         label: "Try the actual support team.",
         hint: "−2 relationship · may return",
         effects: { relationship: -2, rejected: 1, futureChance: 0.12 },
-        response: "“But you ARE a computer person.” Sam may return.",
+        response: "“But you ARE a computer person.” Alan may return.",
+        followUps: [
+          {
+            eventId: "printer-disaster",
+            delay: [20, 35],
+            conditions: { notFlag: "printer-fixed" },
+          },
+        ],
+      },
+      {
+        label: "Is it turned on?",
+        hint: "−2 min · sometimes that really is the problem",
+        effects: { minutes: 2 },
+        response: "It is on. The problem is still a problem.",
+        outcomes: [
+          {
+            probability: 0.55,
+            effects: {
+              relationship: 3,
+              helped: 1,
+              flag: "printer-fixed",
+              counters: { printerFixes: 1, basicFixes: 1 },
+            },
+            response: "It was off. You are briefly a wizard.",
+          },
+        ],
+        followUps: [
+          {
+            eventId: "printer-disaster",
+            delay: [20, 35],
+            probability: 0.6,
+            conditions: { notFlag: "printer-fixed" },
+          },
+        ],
       },
     ],
   },
@@ -220,17 +280,19 @@ export const interruptions: Interruption[] = [
     choices: [
       {
         label: "Sure. Five minutes.",
-        hint: "Actually −35 min · +9 stress · new task",
+        hint: "Actually −15–45 min · +9 stress · new task",
+        duration: [15, 45],
         effects: {
-          minutes: 35,
           stress: 9,
           energy: -8,
           meeting: 1,
           flag: "manager-task",
+          addTask: "Mark’s tiny change",
+          counters: { scopeChanges: 1, managerChanges: 1 },
           relationship: 2,
         },
         response:
-          "35 minutes later: “Let’s schedule a follow-up.” New task: fix his tiny change.",
+          "“Let’s schedule a follow-up.” New task: fix his tiny change.",
       },
       {
         label: "Can you put it in a ticket?",
@@ -240,6 +302,8 @@ export const interruptions: Interruption[] = [
           relationship: -3,
           rejected: 1,
           flag: "manager-task",
+          addTask: "The thing in Mark’s ticket",
+          counters: { scopeChanges: 1, managerChanges: 1 },
         },
         response:
           "He puts “the thing we discussed” in a ticket. New task added.",
@@ -333,7 +397,7 @@ export const interruptions: Interruption[] = [
     ],
   })),
 ];
-export const randomEvents = [
+const baseEvents: WorldEvent[] = [
   {
     id: "production",
     title: "It worked on my machine.",
@@ -341,7 +405,13 @@ export const randomEvents = [
     conditions: { after: 660, minProgress: 20 },
     probability: 0.17,
     cooldown: 150,
-    effects: { stress: 8, productivity: -4 },
+    effects: {
+      stress: 8,
+      productivity: -4,
+      reputation: -5,
+      counters: { productionBugs: 1 },
+    },
+    followUps: [{ eventId: "production-code", delay: [5, 12] }],
   },
   {
     id: "cake",
@@ -350,7 +420,9 @@ export const randomEvents = [
     conditions: { after: 720, before: 840 },
     probability: 0.25,
     cooldown: 300,
-    effects: { energy: 8, stress: -4 },
+    effects: {},
+    decision: "birthday",
+    positive: true,
   },
   {
     id: "deploy",
@@ -359,7 +431,12 @@ export const randomEvents = [
     conditions: { after: 840, minProgress: 50 },
     probability: 0.13,
     cooldown: 120,
-    effects: { stress: 7, productivity: -3 },
+    effects: {
+      stress: 7,
+      productivity: -3,
+      reputation: -3,
+      counters: { buildFailures: 1 },
+    },
   },
   {
     id: "coffee-broken",
@@ -368,6 +445,49 @@ export const randomEvents = [
     conditions: { after: 780 },
     probability: 0.09,
     cooldown: 160,
-    effects: { stress: 3, flag: "coffee-broken" },
+    effects: { stress: 3, cooldowns: { coffee: 10 } },
   },
 ];
+export const interruptions: Interruption[] = [
+  ...baseInterruptions.map((i) => {
+    if (i.id === "printer")
+      return { ...i, onStart: { clearFlags: ["printer-fixed"] } };
+    if (i.id === "tiny-change")
+      return {
+        ...i,
+        category: "management" as const,
+        choices: i.choices.map((c, n) =>
+          n === 0
+            ? {
+                ...c,
+                effects: {
+                  ...c.effects,
+                  addTask: "One more small change",
+                  counters: { scopeChanges: 1, managerChanges: 1 },
+                },
+              }
+            : c,
+        ),
+      };
+    if (i.id === "excel")
+      return extraInterruptions.find((e) => e.id === "excel-teach")
+        ? {
+            ...extraInterruptions.find((e) => e.id === "excel-teach")!,
+            id: "excel",
+          }
+        : i;
+    return i;
+  }),
+  ...extraInterruptions.filter((i) => i.id !== "excel-teach"),
+];
+export const randomEvents: WorldEvent[] = [
+  ...baseEvents.map((e) => ({
+    ...e,
+    conditions: { location: "office" as const, ...e.conditions },
+  })),
+  ...polishEvents,
+];
+export const encounters = [...interruptions, ...codingDecisions];
+export const getEncounter = (id: string | null) =>
+  encounters.find((e) => e.id === id);
+export { codingDecisions };

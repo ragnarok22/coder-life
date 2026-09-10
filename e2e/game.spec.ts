@@ -3,6 +3,7 @@ import { test, expect } from "@playwright/test";
 test("menu, controls and local save restore in an isolated browser", async ({
   page,
 }, testInfo) => {
+  test.setTimeout(180000);
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("/");
@@ -60,9 +61,7 @@ test("menu, controls and local save restore in an isolated browser", async ({
   await expect(
     page.getByRole("dialog", { name: "PC LOAD LETTER" }),
   ).toBeVisible();
-  await page
-    .getByRole("button", { name: /Try the actual support team/ })
-    .click();
+  await page.getByRole("button", { name: /Okay, I’ll take a look/ }).click();
   await page.keyboard.down("a");
   await page.waitForTimeout(2100);
   await page.keyboard.up("a");
@@ -87,10 +86,29 @@ test("menu, controls and local save restore in an isolated browser", async ({
     page.getByRole("button", { name: /Sit down & code/ }),
   ).toBeVisible();
   await page.getByRole("button", { name: /Sit down & code/ }).click();
-  // The manager must navigate to the desk rather than teleport or open a timed popup.
-  await expect(
-    page.getByRole("dialog", { name: "The quick sync" }),
-  ).toBeVisible({ timeout: 75000 });
+  // Coding is now interactive. Resolve real choices until the manager physically reaches the desk.
+  let sawCoding = false,
+    sawManager = false;
+  for (let i = 0; i < 8; i++) {
+    const dialog = page.getByRole("dialog");
+    await expect(dialog).toBeVisible({ timeout: 65000 });
+    if ((await dialog.getAttribute("aria-label")) === "The quick sync") {
+      sawManager = true;
+      break;
+    }
+    const proper = dialog.getByRole("button", { name: /Proper fix/ });
+    if (await proper.count()) {
+      sawCoding = true;
+      await page.screenshot({
+        path: testInfo.outputPath("coding-decision.png"),
+      });
+      await proper.click();
+    } else await dialog.getByRole("button").first().click();
+    const sit = page.getByRole("button", { name: /Sit down & code/ });
+    if (await sit.count()) await sit.click();
+  }
+  expect(sawCoding).toBe(true);
+  expect(sawManager).toBe(true);
   await page.screenshot({
     path: testInfo.outputPath("manager-interruption.png"),
   });
@@ -98,7 +116,7 @@ test("menu, controls and local save restore in an isolated browser", async ({
     .getByRole("button", { name: /Can you put it in a ticket/ })
     .click();
   await page.getByRole("button", { name: /Sit down & code/ }).click();
-  // Step the actual rules at one-minute intervals to verify the remainder without a nine-minute test.
+  // Accelerate only the test harness; production retains the 12–18 minute Day 1 pacing.
   await page.evaluate(async () => {
     const path = performance
       .getEntriesByType("resource")
@@ -110,11 +128,11 @@ test("menu, controls and local save restore in an isolated browser", async ({
       throw new Error("Test must advance the active game store");
     for (
       let minute = 0;
-      minute < 600 && !useGame.getState().game.finished;
+      minute < 1200 && !useGame.getState().game.finished;
       minute++
     ) {
       if (useGame.getState().game.dialogue) useGame.getState().choose(1);
-      useGame.getState().tick(1);
+      useGame.getState().tick(2);
     }
     await useGame.getState().save();
   });

@@ -10,6 +10,7 @@ import {
   tasksComplete,
 } from "../src/game/rules";
 import { interruptions } from "../src/data/content";
+import { resolveChoice } from "../src/events/encounter-engine";
 
 describe("day simulation", () => {
   it("starts at home at 08:00 and does not run while asleep", () => {
@@ -36,25 +37,26 @@ describe("day simulation", () => {
       advance({ ...g, coffeeUntil: 550 }, 15).productivity,
     ).toBeGreaterThan(advance(g, 15).productivity);
   });
-  it("a five minute meeting takes 35 minutes and carries its future consequences", () => {
+  it("a five minute meeting has a variable real cost and carries its future consequences", () => {
     const meeting = interruptions.find((i) => i.id === "minute")!;
-    const next = applyEffects(
-      initialGame(),
-      meeting.choices[0].effects,
-      "manager",
-    );
-    expect(next.minutes).toBe(515);
+    const next = resolveChoice(
+      { ...initialGame(), dialogue: meeting.id },
+      0,
+    ).game;
+    expect(next.minutes).toBeGreaterThanOrEqual(495);
+    expect(next.minutes).toBeLessThanOrEqual(525);
     expect(next.stats.meetings).toBe(1);
     expect(next.flags).toContain("manager-task");
     expect(next.relations.manager).toBe(2);
-    expect(next.stats.wastedMinutes).toBe(35);
+    expect(next.stats.time.meetings).toBe(next.minutes - 480);
+    expect(next.extraTasks).toHaveLength(1);
   });
   it("coffee has diminishing returns and a stress cost for abuse", () => {
     expect([0, 1, 2, 3, 4].map((n) => coffeeEffects(n).energy)).toEqual([
-      20, 15, 10, 5, 5,
+      20, 15, 10, 5, 3,
     ]);
     expect(coffeeEffects(0).stress).toBe(-5);
-    expect(coffeeEffects(3).stress).toBe(15);
+    expect(coffeeEffects(3).stress).toBe(8);
   });
   it("clamps resources, relationships and day-end time", () => {
     const next = applyEffects(
@@ -86,7 +88,7 @@ describe("day simulation", () => {
     expect(g.productivity).toBe(100);
     expect(g.finished).toBe(true);
     expect(tasksComplete(g)).toBe(4);
-    expect(g.achievements).toContain("Actually shipped something");
+    expect(g.achievements).toContain("productive");
     expect(score(g)).toBeGreaterThan(900);
     expect(advance(g, 10)).toBe(g);
   });

@@ -9,6 +9,9 @@ import { useGame } from "./game/store";
 import { useGameLoop } from "./game/use-game-loop";
 
 const GameScene = lazy(() => import("./rendering/game-scene"));
+const DevTools = import.meta.env.DEV
+  ? lazy(() => import("./ui/dev-tools"))
+  : null;
 class GameErrorBoundary extends Component<
   { children: ReactNode },
   { error: string | null }
@@ -65,6 +68,11 @@ export default function App() {
             <GameScene />
           </Suspense>
           <Hud />
+          {DevTools && (
+            <Suspense fallback={null}>
+              <DevTools />
+            </Suspense>
+          )}
           {screen === "paused" && <PauseMenu />}
         </main>
       )}

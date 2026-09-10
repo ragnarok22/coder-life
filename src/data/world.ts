@@ -139,11 +139,12 @@ export const objects: WorldObject[] = [
   {
     id: "bathroom",
     label: "Quiet zone",
-    action: "Hide. Breathe. Repeat. · 10 min",
+    action: "Hide for 7 min",
     position: [3, 5.8],
     location: "office",
     kind: "rest",
-    effects: { minutes: 10, stress: -15, energy: 8 },
+    effects: { stress: -2 },
+    hideZone: "bathroom",
     cooldown: 30,
   },
   {

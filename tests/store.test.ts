@@ -1,7 +1,8 @@
 import "fake-indexeddb/auto";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useGame } from "../src/game/store";
-import { initialGame } from "../src/game/rules";
+import { initialGame, advance } from "../src/game/rules";
+import { initialProfile } from "../src/game/profile";
 import { runtime } from "../src/game/runtime";
 
 vi.mock("../src/game/audio", () => ({
@@ -11,6 +12,7 @@ describe("Day 1 integration", () => {
   beforeEach(() => {
     useGame.setState({
       game: initialGame(),
+      profile: initialProfile(),
       screen: "playing",
       seeking: null,
       nearest: null,
@@ -41,7 +43,10 @@ describe("Day 1 integration", () => {
     useGame.getState().interact();
     expect(useGame.getState().game.working).toBe(true);
     expect(useGame.getState().game.stats.deskArrival).not.toBeNull();
-    useGame.getState().tick(30);
+    useGame.getState().tick(24);
+    expect(useGame.getState().game.dialogue).toBe("auth-code");
+    useGame.getState().choose(1);
+    useGame.getState().tick(20);
     expect(useGame.getState().seeking).toBe("minute");
     expect(useGame.getState().game.productivity).toBeGreaterThan(0);
     useGame.getState().interrupt("minute");
@@ -71,11 +76,10 @@ describe("Day 1 integration", () => {
   it("saves a finished day and can continue at results", async () => {
     useGame.setState({
       game: {
-        ...initialGame(),
+        ...advance({ ...initialGame(), awake: true }, 539),
         awake: true,
         working: true,
         location: "office",
-        minutes: 1019,
         productivity: 99,
       },
     });

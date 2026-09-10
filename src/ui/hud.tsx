@@ -16,8 +16,10 @@ import {
   LogOut,
 } from "lucide-react";
 import { useGame } from "../game/store";
-import { clock } from "../game/rules";
-import { DAY, interruptions, npcs } from "../data/content";
+import { clock, taskNames, tasksComplete, matches } from "../game/rules";
+import { getEncounter, npcs } from "../data/content";
+import { BALANCE } from "../data/balance";
+import { ZoneAndSearch } from "./zone-and-search";
 import { objects } from "../data/world";
 import { MiniMap } from "./mini-map";
 import { audio } from "../game/audio";
@@ -25,8 +27,10 @@ import { input } from "../game/input";
 
 function WorkPanel() {
   const game = useGame((s) => s.game);
-  const active = Math.min(3, Math.floor(game.productivity / 25)),
-    progress = game.productivity >= 100 ? 100 : (game.productivity % 25) * 4;
+  const tasks = taskNames(game);
+  const active = Math.min(tasks.length - 1, tasksComplete(game)),
+    progress =
+      game.productivity >= 100 ? 100 : (game.productivity * tasks.length) % 100;
   useEffect(() => {
     const timer = setInterval(() => audio.play("keyboard"), 480);
     return () => clearInterval(timer);
@@ -54,7 +58,7 @@ function WorkPanel() {
         <h3>
           {game.productivity >= 100
             ? "It’s shipped. You did the thing."
-            : DAY.tasks[active]}
+            : tasks[active]}
         </h3>
         <div className="code-preview">
           <span>01</span>
@@ -77,15 +81,39 @@ function WorkPanel() {
           </code>
         </div>
         <div className="task-progress-label">
-          <span>TASK {active + 1} / 4</span>
+          <span>
+            TASK {active + 1} / {tasks.length}
+          </span>
           <strong>{Math.round(progress)}%</strong>
         </div>
         <div className="progress-track">
           <div style={{ width: `${progress}%` }} />
         </div>
-        {game.flags.includes("manager-task") && (
-          <p className="extra-task">↳ Also: Mark’s “tiny change”. Naturally.</p>
+        {game.extraTasks.length > 0 && (
+          <p className="extra-task">
+            ↳ {game.extraTasks.length} extra task
+            {game.extraTasks.length === 1 ? "" : "s"}. Same day. Naturally.
+          </p>
         )}
+        <div className="code-health">
+          <span>
+            Quality <strong>{Math.round(game.codeQuality)}</strong>
+          </span>
+          <span className={game.technicalDebt > 40 ? "debt-high" : ""}>
+            Tech debt <strong>{Math.round(game.technicalDebt)}</strong>
+          </span>
+          <span>
+            Next decision{" "}
+            <strong>
+              ~
+              {Math.max(
+                0,
+                Math.ceil(game.nextCodingAt - game.stats.workMinutes),
+              )}{" "}
+              min
+            </strong>
+          </span>
+        </div>
         <div className="work-bottom">
           <span>
             <Clock3 size={13} /> Time keeps moving.
@@ -108,7 +136,8 @@ function Dialogue() {
     else element?.close();
     return () => element?.close();
   }, [screen, id]);
-  const interruption = interruptions.find((i) => i.id === id);
+  const game = useGame((s) => s.game);
+  const interruption = getEncounter(id);
   if (!interruption) return null;
   const npc = npcs.find((n) => n.id === interruption.npc);
   return (
@@ -126,30 +155,54 @@ function Dialogue() {
           className="npc-avatar"
           style={{ background: npc?.color ?? "#d4a566" }}
         >
-          {npc?.name[0] ?? "N"}
+          {npc?.name[0] ??
+            (interruption.npc === "system" ? <Terminal size={23} /> : "N")}
           <span>!</span>
         </div>
         <div>
           <span className="eyebrow">
             {interruption.category === "meeting"
               ? "THIS COULD HAVE BEEN AN EMAIL"
-              : "AN UNSCHEDULED SIDE QUEST"}
+              : interruption.category === "coding"
+                ? "A DECISION FOR FUTURE YOU"
+                : "AN UNSCHEDULED SIDE QUEST"}
           </span>
           <h3>
-            {npc?.name ?? "Your neighbor"}{" "}
-            <span>· {npc?.role ?? "Also not your job"}</span>
+            {npc?.name ??
+              (interruption.npc === "system"
+                ? "Your code"
+                : "Your neighbor")}{" "}
+            <span>
+              ·{" "}
+              {npc?.role ??
+                (interruption.npc === "system"
+                  ? "Engineering"
+                  : "Also not your job")}
+            </span>
           </h3>
         </div>
         <span className="dialogue-pause">
           <Pause size={12} /> CLOCK PAUSED
         </span>
       </div>
+      {npc && (
+        <p className="relationship-hint" title={npc.personality?.description}>
+          Trust:{" "}
+          {(game.relations[npc.id] ?? 0) >= BALANCE.goodRelationship
+            ? "has your back"
+            : (game.relations[npc.id] ?? 0) <= BALANCE.hostileRelationship
+              ? "strained"
+              : "getting to know you"}{" "}
+          · {npc.personality?.description}
+        </p>
+      )}
       <p className="dialogue-quote">“{interruption.dialogue}”</p>
       <div className="dialogue-options">
         {interruption.choices.map((choice, index) => (
           <button
             key={choice.label}
             autoFocus={index === 0}
+            disabled={!!choice.conditions && !matches(game, choice.conditions)}
             onClick={() => useGame.getState().choose(index)}
           >
             <span className="choice-number">0{index + 1}</span>
@@ -162,7 +215,9 @@ function Dialogue() {
         ))}
       </div>
       <div className="dialogue-footnote">
-        Your choices matter. Mostly to your calendar.
+        {interruption.category === "coding"
+          ? `Code quality ${Math.round(game.codeQuality)} · Technical debt ${Math.round(game.technicalDebt)} · Your future bugs are listening.`
+          : "Your choices matter. Mostly to your calendar."}
       </div>
     </dialog>
   );
@@ -204,26 +259,30 @@ export function Hud() {
     status = useGame((s) => s.saveStatus);
   const nearestObject = objects.find((o) => o.id === nearest),
     npc = npcs.find((n) => `npc:${n.id}` === nearest);
-  const objective = !game.awake
-    ? "GET OUT OF BED"
-    : game.location === "home"
-      ? "GET TO WORK"
-      : game.location === "commute"
-        ? "WALK TO THE OFFICE"
-        : game.productivity >= 100
-          ? "SURVIVE UNTIL 17:00"
-          : game.working
-            ? "SHIP SOMETHING. ANYTHING."
-            : game.energy < 25
-              ? "REFUEL AT THE KITCHEN"
-              : "REACH YOUR DESK";
+  const objective = game.hidingZone
+    ? `LAY LOW · ${Math.ceil(game.hiddenUntil - game.minutes)} MIN`
+    : !game.awake
+      ? "GET OUT OF BED"
+      : game.location === "home"
+        ? "GET TO WORK"
+        : game.location === "commute"
+          ? "WALK TO THE OFFICE"
+          : game.productivity >= 100
+            ? "SURVIVE UNTIL 17:00"
+            : game.working
+              ? "SHIP SOMETHING. ANYTHING."
+              : game.energy < 25
+                ? "REFUEL AT THE KITCHEN"
+                : "REACH YOUR DESK";
   useEffect(() => {
     if (!toast) return;
     const timer = setTimeout(() => useGame.setState({ toast: null }), 7000);
     return () => clearTimeout(timer);
   }, [toast]);
   return (
-    <div className="game-ui">
+    <div
+      className={`game-ui ${game.minutes >= game.deadline - 60 && game.productivity < 100 ? "deadline-pressure" : ""}`}
+    >
       <header className="game-top">
         <div className="day-clock">
           <span className="mini-logo">
@@ -296,12 +355,19 @@ export function Hud() {
             ? "An exciting new day of existing."
             : game.location === "commute"
               ? "Follow the path. Avoid eye contact."
-              : `${Math.min(4, Math.floor(game.productivity / 25))}/4 tasks · ${game.stats.interruptions} interruptions survived`}
+              : `${tasksComplete(game)}/${taskNames(game).length} tasks · ${game.stats.interruptions} interruptions · ${game.stats.evaded} evaded`}
         </span>
         {game.coffeeUntil > game.minutes && (
           <span className="coffee-buff">
             <Coffee size={12} /> Java boost ·{" "}
             {Math.ceil(game.coffeeUntil - game.minutes)} min
+          </span>
+        )}
+        {game.minutes >= game.deadline - 60 && game.productivity < 100 && (
+          <span className="deadline-note">
+            Delivery {clock(game.deadline)} ·{" "}
+            {Math.max(0, Math.ceil(game.deadline - game.minutes))} min left.
+            Protect your focus.
           </span>
         )}
       </div>
@@ -326,7 +392,20 @@ export function Hud() {
         <>
           <MiniMap />
           <div className="interaction-prompt">
-            {!game.awake ? (
+            {game.hidingZone ? (
+              <>
+                <div>
+                  <span>STRATEGIC DISAPPEARANCE</span>
+                  <strong>
+                    {Math.max(0, Math.ceil(game.hiddenUntil - game.minutes))}{" "}
+                    min remaining. Work is waiting.
+                  </strong>
+                </div>
+                <button onClick={() => useGame.getState().stopHiding()}>
+                  <kbd>E</kbd> Leave hiding spot
+                </button>
+              </>
+            ) : !game.awake ? (
               <>
                 <span className="prompt-icon">
                   <Coffee size={19} />
@@ -367,6 +446,7 @@ export function Hud() {
       )}
       {game.working && !game.dialogue && <WorkPanel />}
       {game.dialogue && <Dialogue />}
+      {!game.dialogue && <ZoneAndSearch />}
       <div
         className={`save-indicator ${status === "error" ? "save-failed" : ""}`}
       >

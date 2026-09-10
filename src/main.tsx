@@ -1,6 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
+import "./gameplay-polish.css";
 import App from "./app.tsx";
 
 // Replace the static menu with the interactive game, including local preferences.

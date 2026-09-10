@@ -1,5 +1,6 @@
 import { bounds, obstacles } from "../data/world";
 import type { Location, Vec2 } from "../game/types";
+import { BALANCE } from "../data/balance";
 
 const CELL = 0.65;
 export function walkable(p: Vec2, location: Location, radius = 0.35) {
@@ -37,7 +38,7 @@ export function canSee(a: Vec2, heading: number, b: Vec2, location: Location) {
   const dx = b[0] - a[0],
     dz = b[1] - a[1],
     distance = Math.hypot(dx, dz);
-  if (distance > 7) return false;
+  if (distance > BALANCE.sightDistance) return false;
   const facing =
     distance < 1.8 ||
     (Math.sin(heading) * dx + Math.cos(heading) * dz) / distance > 0.25;

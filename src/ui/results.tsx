@@ -11,11 +11,27 @@ import {
   Home,
 } from "lucide-react";
 import { useGame } from "../game/store";
-import { clock, score, tasksComplete } from "../game/rules";
+import {
+  clock,
+  duration,
+  score,
+  taskNames,
+  tasksComplete,
+} from "../game/rules";
+import { achievements } from "../data/achievements";
+import { evaluateEnding } from "../data/endings";
+import { TIME_CATEGORIES, TIME_LABELS } from "../data/balance";
+import { useState } from "react";
+import { Journal } from "./journal";
 
 export function Results() {
   const game = useGame((s) => s.game),
-    won = game.productivity >= 100;
+    profile = useGame((s) => s.profile);
+  const ending = evaluateEnding(game);
+  const [journal, setJournal] = useState(false);
+  const mostWasted = TIME_CATEGORIES.filter((c) => c !== "coding").toSorted(
+    (a, b) => game.stats.time[b] - game.stats.time[a],
+  )[0];
   const rows = [
     ["Real work", `${Math.round(game.stats.workMinutes)} min`, Code2],
     [
@@ -32,6 +48,11 @@ export function Results() {
     ],
     ["Coffees consumed", game.stats.coffees, Coffee],
     ["Peak stress", `${Math.round(game.stats.maxStress)}%`, Flame],
+    ["Final energy", `${Math.round(game.energy)}%`, Coffee],
+    ["Code quality", `${Math.round(game.codeQuality)}%`, Code2],
+    ["Technical debt", `${Math.round(game.technicalDebt)}%`, Code2],
+    ["Office reputation", `${Math.round(game.reputation)}%`, Users],
+    ["Requests evaded", game.stats.evaded, Users],
     [
       "First reached your desk",
       game.stats.deskArrival === null
@@ -65,13 +86,15 @@ export function Results() {
             <span>You survived.</span>
           </h1>
           <p className="result-verdict">
-            {won
-              ? "“Somehow, you actually shipped it.”"
-              : "“Somehow still employed.”"}
+            <strong>{ending.title}</strong>
+            <br />“{ending.quote}”
           </p>
           <div className="score-number">
             {score(game)}
             <span>MONDAY SURVIVAL POINTS</span>
+            <small className="best-score">
+              PERSONAL BEST: {profile.bestScore}
+            </small>
           </div>
           <div className="result-work">
             <span>PRODUCTIVITY</span>
@@ -80,15 +103,16 @@ export function Results() {
               <div style={{ width: `${game.productivity}%` }} />
             </div>
             <small>
-              {tasksComplete(game)}/4 tasks completed · {tasksComplete(game)}{" "}
-              bugs resolved
+              {tasksComplete(game)}/{taskNames(game).length} tasks completed ·{" "}
+              {game.stats.counters.bugsResolved ?? 0} bugs resolved
             </small>
           </div>
           <div className="achievement-list">
             {game.achievements.map((a) => (
               <span key={a}>
                 <Award size={13} />
-                {a}
+                {achievements.find((definition) => definition.id === a)
+                  ?.title ?? a}
               </span>
             ))}
           </div>
@@ -108,9 +132,11 @@ export function Results() {
           <div className="result-note">
             <Coffee size={22} />
             <p>
-              Tomorrow’s agenda?
+              Most time lost to: {TIME_LABELS[mostWasted]}
               <br />
-              <strong>More experience. Probably more meetings.</strong>
+              <strong>
+                {duration(game.stats.time[mostWasted])} · {ending.description}
+              </strong>
             </p>
           </div>
           <button
@@ -128,6 +154,12 @@ export function Results() {
           >
             <Home size={16} /> Back to main menu
           </button>
+          <button
+            className="text-button full-width"
+            onClick={() => setJournal(true)}
+          >
+            View journal, achievements & discovered endings
+          </button>
           <p className="fine-print center">
             <Check size={12} />{" "}
             {useGame((s) => s.saveStatus) === "error"
@@ -136,6 +168,28 @@ export function Results() {
           </p>
         </div>
       </section>
+      <section className="results-breakdown">
+        <div>
+          <p className="eyebrow">NINE HOURS. EVERY MINUTE ACCOUNTED FOR.</p>
+          <h2>Where Monday went.</h2>
+        </div>
+        <div className="time-breakdown">
+          {TIME_CATEGORIES.map((category) => (
+            <div key={category}>
+              <span>{TIME_LABELS[category]}</span>
+              <div>
+                <i
+                  style={{
+                    width: `${(game.stats.time[category] / 540) * 100}%`,
+                  }}
+                />
+              </div>
+              <strong>{duration(game.stats.time[category])}</strong>
+            </div>
+          ))}
+        </div>
+      </section>
+      {journal && <Journal onClose={() => setJournal(false)} />}
       <footer className="results-footer">
         DAY 1 / JUNIOR DEVELOPER{" "}
         <span>CAREER ROADMAP: DEVELOPER → SENIOR → TECH LEAD</span>
