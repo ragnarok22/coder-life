@@ -5,7 +5,9 @@ export const CHAIR_POSE = {
   deskOffset: 1.16,
   cushionCenter: 0.54,
   cushionThickness: 0.16,
-  seatHeight: 0.62,
+  get seatHeight(): number {
+    return this.cushionCenter + this.cushionThickness / 2;
+  },
   exitOffset: 0.95,
   hipHeight: 0.56,
   kneeOffset: 0.225,

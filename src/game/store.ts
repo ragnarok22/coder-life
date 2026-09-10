@@ -140,10 +140,15 @@ export const useGame = create<Store>((set, get) => ({
       }
       audio.unlock();
       const game = { ...initialGame(), ...save.game, working: false };
+      const onChair =
+        game.location === "office" &&
+        (save.game.working ||
+          Math.hypot(
+            game.position[0] - playerChairPose.position[0],
+            game.position[1] - playerChairPose.position[1],
+          ) < 0.35);
       game.position = nearestWalkable(
-        save.game.working && game.location === "office"
-          ? playerChairPose.exitPosition
-          : game.position,
+        onChair ? playerChairPose.exitPosition : game.position,
         game.location,
       );
       runtime.player = [...game.position];

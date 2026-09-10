@@ -56,25 +56,29 @@ describe("player presentation and furniture anchors", () => {
     expect(walkable(HOME_BED.wakePosition, "home")).toBe(true);
     expect(initialGame().position).toEqual(HOME_BED.wakePosition);
   });
-  it("continues a saved working session beside the chair, rather than standing inside it", async () => {
-    runtime.player = [...playerChairPose.position];
-    useGame.setState({
-      game: {
-        ...initialGame(),
-        location: "office",
-        awake: true,
-        working: true,
-        position: [...playerChairPose.position],
-      },
-      profile: initialProfile(),
-      screen: "playing",
-    });
-    await useGame.getState().save();
-    useGame.setState({ screen: "menu" });
-    await useGame.getState().continueGame();
-    const game = useGame.getState().game;
-    expect(game.working).toBe(false);
-    expect(game.position).toEqual(playerChairPose.exitPosition);
-    expect(game.minutes).toBe(480);
-  });
+  it.each([true, false])(
+    "continues a chair save beside the chair (working=%s)",
+    async (working) => {
+      runtime.player = [...playerChairPose.position];
+      useGame.setState({
+        game: {
+          ...initialGame(),
+          location: "office",
+          awake: true,
+          working,
+          dialogue: working ? null : "minute",
+          position: [...playerChairPose.position],
+        },
+        profile: initialProfile(),
+        screen: "playing",
+      });
+      await useGame.getState().save();
+      useGame.setState({ screen: "menu" });
+      await useGame.getState().continueGame();
+      const game = useGame.getState().game;
+      expect(game.working).toBe(false);
+      expect(game.position).toEqual(playerChairPose.exitPosition);
+      expect(game.minutes).toBe(480);
+    },
+  );
 });

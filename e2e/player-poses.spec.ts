@@ -183,7 +183,28 @@ test("working aligns with the real chair from different approach positions and r
     await page.screenshot({
       path: info.outputPath(`seated-${position[0]}.png`),
     });
-    await page.getByRole("button", { name: /Leave desk/ }).click();
+    if (position[0] === -7.2) {
+      await page.evaluate(async () => {
+        const path = performance
+          .getEntriesByType("resource")
+          .map((e) => e.name)
+          .filter((url) => new URL(url).pathname === "/src/game/store.ts")
+          .at(-1)!;
+        const { useGame } = await import(/* @vite-ignore */ path);
+        useGame.getState().interrupt("minute");
+      });
+      await expect(
+        page.getByRole("dialog", { name: "The quick sync" }),
+      ).toBeVisible();
+      await page.waitForTimeout(350);
+      const seatedTalk = (await playerPose(page))!;
+      expect(seatedTalk.animation).toBe("talk");
+      expect(Math.abs(seatedTalk.hip![1] - 0.62)).toBeLessThan(0.06);
+      await page
+        .getByRole("button", { name: /Can you put it in a ticket/ })
+        .click();
+      await page.waitForTimeout(400);
+    } else await page.getByRole("button", { name: /Leave desk/ }).click();
     await page.keyboard.down("s");
     await page.waitForTimeout(400);
     await page.keyboard.up("s");
