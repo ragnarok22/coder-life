@@ -4,14 +4,17 @@ import { getEncounter } from "../data/content";
 import { npcSeed, randomStream } from "../game/random";
 import { canSee, findPath, walkable, lineOfSight } from "./navigation";
 import type { GameData, NpcDefinition, NpcState, Vec2 } from "../game/types";
+import { OFFICE_PRESENTATION as P } from "../data/presentation";
+import { officePatrol } from "../data/office-layout";
 
 export function createBrain(npc: NpcDefinition, seed: number) {
   const random = randomStream(npcSeed(seed, npc.id));
   return {
+    id: npc.id,
     position: [...npc.position] as Vec2,
     destination: [...npc.desk] as Vec2,
     state: "idle" as NpcState,
-    heading: 0,
+    heading: npc.workHeading ?? 0,
     path: [] as Vec2[],
     timer: random.next(),
     random,
@@ -23,10 +26,26 @@ export function createBrain(npc: NpcDefinition, seed: number) {
     blockedSeconds: 0,
     gaveUpUntil: 0,
     elapsed: 0,
+    perceptionTimer: 0,
+    sees: false,
+    goal: "",
+    pathTarget: null as Vec2 | null,
+    socialUntil: 0,
+    socialAt: 15 + random.next() * 20,
+    socialPoint: null as Vec2 | null,
+    goalKind: "desk",
   };
 }
 export type NpcBrain = ReturnType<typeof createBrain>;
-type Neighbor = { position: Vec2 };
+type Neighbor = {
+  position: Vec2;
+  id?: string;
+  elapsed?: number;
+  socialUntil?: number;
+  socialPoint?: Vec2 | null;
+  socialAt?: number;
+  state?: NpcState;
+};
 export function visibleToNpc(brain: NpcBrain, game: GameData, player: Vec2) {
   const playerZone = zoneAt(player, "office"),
     npcZone = zoneAt(brain.position, "office");
@@ -44,14 +63,7 @@ export function visibleToNpc(brain: NpcBrain, game: GameData, player: Vec2) {
     return false;
   return canSee(brain.position, brain.heading, player, "office");
 }
-const patrol: Vec2[] = [
-  [-6, 3.4],
-  [0, 0],
-  [-9, -3.8],
-  [7.3, 3.8],
-  [6.3, -2.7],
-  [1, 7.7],
-];
+const patrol = officePatrol;
 export function stepBrain(
   b: NpcBrain,
   npc: NpcDefinition,
@@ -90,17 +102,34 @@ export function stepBrain(
     b.path = [];
   }
   if (b.gaveUpUntil > b.elapsed) return false;
+  const others = [...neighbors];
+  if (!seeking && b.socialUntil > b.elapsed) {
+    b.state = "talking";
+    if (b.socialPoint)
+      b.heading = Math.atan2(
+        b.socialPoint[0] - b.position[0],
+        b.socialPoint[1] - b.position[1],
+      );
+    return false;
+  }
   b.timer -= dt;
-  const sees = visibleToNpc(b, game, player);
+  b.perceptionTimer -= dt;
+  if (b.perceptionTimer <= 0) {
+    b.sees = visibleToNpc(b, game, player);
+    b.perceptionTimer = P.perceptionInterval;
+  }
+  const sees = b.sees;
   if (
     seeking &&
     sees &&
     Math.hypot(player[0] - b.position[0], player[1] - b.position[1]) <
-      BALANCE.interactionDistance
+      BALANCE.interactionDistance &&
+    visibleToNpc(b, game, player)
   )
     return true;
   if (b.timer <= 0) {
-    b.timer = BALANCE.npcThinkSeconds;
+    b.timer = P.pathInterval;
+    const sees = visibleToNpc(b, game, player);
     if (sees) {
       b.lastSeen = [...player];
       b.lastSeenAt = game.minutes;
@@ -127,18 +156,72 @@ export function stepBrain(
           .reverse()
           .find((s) => s.at + b.offset <= game.minutes),
         goal = schedule?.goal;
+      const goalKey = `${schedule?.at}:${goal}:${game.minutes < (game.cooldowns[`npc:${npc.id}`] ?? 0)}`;
+      const changed = goalKey !== b.goal;
+      b.goal = goalKey;
+      b.goalKind = goal ?? "wander";
       if (game.minutes < (game.cooldowns[`npc:${npc.id}`] ?? 0))
         b.destination = [0, 7.7];
       else if (goal === "desk") b.destination = npc.desk;
-      else if (goal === "coffee")
+      else if (goal === "coffee" && changed)
         b.destination = [7.2 + b.random.next(), 4 + b.random.next() * 1.6];
-      else if (goal === "meeting" && meetingOccupied(game.minutes))
-        b.destination = [6.4 + b.random.next() * 3, -6.5];
-      else if (!b.path.length)
+      else if (goal === "meeting" && meetingOccupied(game.minutes) && changed)
+        b.destination = [7.5 + b.random.next() * 3, -6.5];
+      else if (
+        goal !== "coffee" &&
+        !(goal === "meeting" && meetingOccupied(game.minutes)) &&
+        !b.path.length
+      )
         b.destination = patrol[Math.floor(b.random.next() * patrol.length)]!;
       b.state = "walking";
+      const zone = zoneAt(b.position, "office");
+      if (
+        b.elapsed >= b.socialAt &&
+        (zone?.id === "kitchen" || zone?.id === "lounge")
+      ) {
+        b.socialAt = b.elapsed + P.smallTalkCooldown;
+        const peer = others.find(
+          (o) =>
+            o.id &&
+            o.id !== npc.id &&
+            o.socialUntil !== undefined &&
+            o.socialUntil <= (o.elapsed ?? 0) &&
+            Math.hypot(
+              o.position[0] - b.position[0],
+              o.position[1] - b.position[1],
+            ) < 1.7 &&
+            lineOfSight(b.position, o.position, "office"),
+        );
+        if (peer) {
+          const duration =
+            P.smallTalkSeconds[0] +
+            b.random.next() * (P.smallTalkSeconds[1] - P.smallTalkSeconds[0]);
+          b.socialUntil = b.elapsed + duration;
+          b.socialPoint = [...peer.position];
+          peer.socialUntil = (peer.elapsed ?? b.elapsed) + duration;
+          peer.socialPoint = [...b.position];
+          peer.socialAt = (peer.elapsed ?? b.elapsed) + P.smallTalkCooldown;
+          b.path = [];
+          b.state = "talking";
+          return false;
+        }
+      }
     }
-    b.path = findPath(b.position, b.destination, "office");
+    if (
+      !b.pathTarget ||
+      Math.hypot(
+        b.pathTarget[0] - b.destination[0],
+        b.pathTarget[1] - b.destination[1],
+      ) > 0.5 ||
+      (!b.path.length &&
+        Math.hypot(
+          b.position[0] - b.destination[0],
+          b.position[1] - b.destination[1],
+        ) > 0.3)
+    ) {
+      b.path = findPath(b.position, b.destination, "office");
+      b.pathTarget = [...b.destination];
+    }
   }
   // Courtesy steering yields to the player. Sensor colliders are a final safeguard in tight doors.
   const playerDistance = Math.hypot(
@@ -163,7 +246,13 @@ export function stepBrain(
   }
   const next = b.path[0];
   if (!next) {
-    b.state = seeking ? "waitingForPlayer" : "working";
+    b.state = seeking
+      ? "waitingForPlayer"
+      : b.goalKind === "coffee"
+        ? "usingObject"
+        : "working";
+    if (!seeking && b.goalKind === "desk" && npc.workHeading !== undefined)
+      b.heading = npc.workHeading;
     return false;
   }
   const dx = next[0] - b.position[0],
@@ -183,7 +272,6 @@ export function stepBrain(
     b.position[0] + (dx / distance) * step,
     b.position[1] + (dz / distance) * step,
   ];
-  const others = [...neighbors];
   const occupied = (p: Vec2) =>
     others.some(
       (other) =>

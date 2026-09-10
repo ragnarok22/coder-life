@@ -19,6 +19,7 @@ import { applyEffects, coffeeEffects, initialGame, matches } from "./rules";
 import { loadGame, resetSave, saveGame } from "./persistence";
 import { audio } from "./audio";
 import { runtime } from "./runtime";
+import { nearestWalkable } from "../ai/navigation";
 import { initialProfile, recordProgress } from "./profile";
 import type { CareerProfile, GameData, Preferences, Screen } from "./types";
 import { createMembershipIndex } from "./membership-index";
@@ -138,6 +139,7 @@ export const useGame = create<Store>((set, get) => ({
       }
       audio.unlock();
       const game = { ...initialGame(), ...save.game, working: false };
+      game.position = nearestWalkable(game.position, game.location);
       runtime.player = [...game.position];
       runtime.npcs.clear();
       set({

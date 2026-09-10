@@ -309,6 +309,38 @@ export const officePartitions: OfficePartition[] = [
   },
 ];
 export const officeFurniture: (Obstacle & { id: string })[] = [
+  ...officeDesks.flatMap((d) => {
+    const sign = d.rotation === 0 ? 1 : -1;
+    const monitors = [
+      {
+        id: `monitor-${d.id}`,
+        x: d.position[0] - 0.18 * sign,
+        z: d.position[1] - 0.32 * sign,
+        w: 1.2,
+        d: 0.2,
+        h: 2.14,
+      },
+    ];
+    if (d.variant === "developer" || d.variant === "rockstar")
+      monitors.push({
+        id: `monitor-side-${d.id}`,
+        x: d.position[0] + 0.96 * sign,
+        z: d.position[1] - 0.27 * sign,
+        w: 0.78,
+        d: 0.3,
+        h: 1.98,
+      });
+    if (d.variant === "rockstar")
+      monitors.push({
+        id: `monitor-left-${d.id}`,
+        x: d.position[0] - 1.18 * sign,
+        z: d.position[1] - 0.25 * sign,
+        w: 0.78,
+        d: 0.3,
+        h: 1.98,
+      });
+    return monitors;
+  }),
   ...officeDesks.map((d) => ({
     id: d.id,
     x: d.position[0],
@@ -361,6 +393,6 @@ export const officeNpcHomes: Record<
     heading: Math.PI,
     seated: true,
   },
-  "corporate-visionary": { position: [11.6, -3.3], heading: -1.1 },
+  "corporate-visionary": { position: [12.1, -3.3], heading: -1.1 },
   "office-analyst": { position: [-4, -6.9], heading: Math.PI },
 };

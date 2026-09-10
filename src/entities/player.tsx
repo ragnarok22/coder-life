@@ -104,6 +104,7 @@ export function Player() {
     });
     runtime.player[0] = p.x;
     runtime.player[1] = p.z;
+    runtime.playerHeight = p.y;
     runtime.speed = Math.hypot(movement.x, movement.z) / dt;
     runtime.animation = state.game.working
       ? "typing"

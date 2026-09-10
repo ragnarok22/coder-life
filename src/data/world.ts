@@ -1,4 +1,4 @@
-import type { Location, Obstacle, WorldObject } from "../game/types";
+import type { Location, Obstacle, WorldObject, Vec2 } from "../game/types";
 import {
   OFFICE_SIZE,
   officeDesks,
@@ -8,6 +8,7 @@ import {
 } from "./office-layout";
 
 export const OFFICE_DESKS = officeDesks.map((d) => d.position);
+export function groundHeight(position:Vec2,location:Location){return location==='office'?officeSteps.reduce((height,s)=>Math.abs(position[0]-s.x)<=s.w/2&&Math.abs(position[1]-s.z)<=s.d/2?Math.max(height,s.h):height,0):0;}
 export const bounds: Record<Location, { w: number; d: number }> = {
   home: { w: 12, d: 10 },
   commute: { w: 12, d: 18 },

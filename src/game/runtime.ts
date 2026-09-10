@@ -6,7 +6,11 @@ export const runtime = {
   yaw: 0,
   animation: "idle" as AnimationState,
   speed: 0,
+  playerHeight: 0.8,
   camera: {
+    blocked: false,
+    drawCalls: 0,
+    triangles: 0,
     yaw: 0,
     pitch: 0.48,
     collided: false,

@@ -9,6 +9,8 @@ import {
 // Module-owned, bounded palette resources. Individual meshes must not dispose shared assets.
 export const unitBox = new BoxGeometry(1, 1, 1);
 export const unitCylinder = new CylinderGeometry(1, 1, 1, 10);
+const cylinders=new Map<number,CylinderGeometry>([[1,unitCylinder]]);
+export function cylinderFor(topRatio:number){let geometry=cylinders.get(topRatio);if(!geometry){geometry=new CylinderGeometry(topRatio,1,1,10);cylinders.set(topRatio,geometry);}return geometry;}
 export const unitLeaf = new IcosahedronGeometry(1, 0);
 export const mugHandle = new TorusGeometry(0.09, 0.025, 5, 10);
 export const glassesRing = new TorusGeometry(0.12, 0.018, 5, 12);

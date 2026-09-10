@@ -74,16 +74,18 @@ export function updateCameraRig(
   }
   direction(r, r.pitch);
   const baseHit = sweep(r.target, r.direction, r.zoom);
-  r.confined = damp(
-    r.confined,
-    baseHit !== null && baseHit < C.closeDistance ? 1 : 0,
-    C.confinedBlend,
-    dt,
-  );
-  direction(
-    r,
-    r.pitch + (Math.max(r.pitch, C.confinedPitch) - r.pitch) * r.confined,
-  );
+  let lift = 0;
+  if (baseHit !== null && baseHit < C.closeDistance) {
+    for (const pitch of C.confinedAngles) {
+      const elevated = Math.max(r.pitch, pitch);
+      direction(r, elevated);
+      const clearance = sweep(r.target, r.direction, r.zoom);
+      lift = elevated - r.pitch;
+      if (clearance === null || clearance >= C.closeDistance) break;
+    }
+  }
+  r.confined = damp(r.confined, lift, C.confinedBlend, dt);
+  direction(r, r.pitch + r.confined);
   const hit = sweep(r.target, r.direction, r.zoom);
   const safe = hit === null ? r.zoom : Math.max(0.05, hit - C.collisionMargin);
   // Contraction follows the continuously swept surface; recovery is deliberately slower.

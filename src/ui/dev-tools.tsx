@@ -9,6 +9,7 @@ import { advance, clamp, taskNames } from "../game/rules";
 import { recordProgress } from "../game/profile";
 import { applyWorldEvent } from "../events/encounter-engine";
 import type { GameData } from "../game/types";
+import { WorldDevControls } from "./world-dev-controls";
 
 const update = (patch: Partial<GameData>) =>
   useGame.setState({ game: { ...useGame.getState().game, ...patch } });
@@ -279,6 +280,7 @@ export default function DevTools() {
             </button>
             <button onClick={endDay}>Finish day</button>
           </div>
+          <WorldDevControls />
           <small>
             Seed {game.seed} · queue {game.pendingEvents.length}/
             {BALANCE.queueLimit} · changes are real local gameplay state.
