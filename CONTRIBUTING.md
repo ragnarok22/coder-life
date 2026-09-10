@@ -10,7 +10,7 @@ Please follow our [Code of Conduct](CODE_OF_CONDUCT.md). It also explains how to
 - Small fixes and documentation improvements can go straight to a pull request.
 - For larger features, balance changes, or architectural work, sharing an issue first helps align the approach and avoid duplicated effort.
 
-Only Day 1 is currently playable. The [README](README.md) describes the game, its architecture, and where to add content. [AGENTS.md](AGENTS.md) contains detailed repository conventions, including guidance for coding agents.
+Only Day 1 is currently playable. The [README](README.md) describes the game and its controls. [AGENTS.md](AGENTS.md) contains detailed repository conventions, including guidance for coding agents.
 
 ### Report a bug
 
@@ -56,7 +56,7 @@ pnpm preview
 
 Use `pnpm build` rather than calling Vite's build directly: it runs TypeScript checks, bundles the app, and prerenders the main menu into `dist/index.html`.
 
-`SITE_URL` is optional for local development. To test canonical URLs, social metadata, or subdirectory hosting, configure the full homepage URL through `SITE_URL` or `.env.production.local`. See [Search engines and link previews](README.md#search-engines-and-link-previews).
+`SITE_URL` is optional for local development. To test canonical URLs, social metadata, or subdirectory hosting, configure the full homepage URL through `SITE_URL` or `.env.production.local`. See [Build and deploy](README.md#build-and-deploy).
 
 ## Make your changes
 
@@ -74,7 +74,7 @@ Keep each change focused and follow the patterns in the surrounding code.
 - Put pure game transitions in `src/game/rules.ts`. Use `src/game/store.ts` to coordinate events, UI state, audio, and saves.
 - Keep high-frequency player and NPC state in `src/game/runtime.ts`, outside React and persistent game state.
 - Use the shared world definitions in `src/data/world.ts` for navigation and physics. World/save `Vec2` coordinates are `[x, z]`. World object changes may also require updates in `src/rendering/world.tsx`.
-- Keep game tuning and encounters in the existing data and event systems. See [Adding content](README.md#adding-content) for the relevant files.
+- Keep game tuning in `src/data/balance.ts`, encounters in `src/data/polish-content.ts`, and coding incidents in `src/data/coding-decisions.ts`. Content is aggregated by `src/data/content.ts`; generic effects and follow-ups are handled in `src/events/`.
 - Preserve save compatibility and stable achievement IDs. When changing persistence, account for migration in `src/game/save-migration.ts` and cover the affected save paths. Save fixtures must keep the time ledger equal to `minutes - dayStart`.
 - Keep runtime assets local, including fonts, models, audio, and Rapier WASM.
 - Preserve lazy loading of `GameScene` and `MenuScene`. The main menu is also rendered in Node by `src/prerender.ts`, so its render/import path must remain safe without browser globals. Retain `<!--app-html-->` in `index.html`.
