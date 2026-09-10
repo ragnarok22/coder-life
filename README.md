@@ -116,8 +116,11 @@ pnpm format:check
 pnpm test
 pnpm test:coverage
 pnpm test:e2e
+pnpm test:seo
 ```
 
 Unit/integration tests cover day rules, decisions, resource bounds, end-of-day scoring, A* reachability, visibility, IndexedDB and the Day 1 flow. Playwright uses an isolated Chrome instance to drive the real keyboard/controller from home to office, verify working and manager interception, save/reload, and check results. It also captures desktop/mobile screenshots. The remainder of the day is accelerated in the test harness by calling the same game rules, not by modifying production pacing.
 
 Playwright expects Google Chrome (`channel: 'chrome'`). Install it, or change `playwright.config.ts` to bundled Chromium and run `pnpm exec playwright install chromium`.
+
+`pnpm test:seo` builds and serves production output on port 4187 with an example canonical URL. It checks the JavaScript-disabled landing page, metadata, sitemap, social image, and interactive desktop/mobile startup. Run `pnpm build` with your real `SITE_URL` afterward before deploying.

@@ -5,10 +5,11 @@ const canonical = "https://example.com/coder-life/";
 test("production HTML is readable without JavaScript and includes complete SEO metadata", async ({
   browser,
   request,
+  baseURL,
 }) => {
-  const context = await browser.newContext({ javaScriptEnabled: false });
+  const context = await browser.newContext({ javaScriptEnabled: false, baseURL });
   const page = await context.newPage();
-  await page.goto("http://127.0.0.1:4173");
+  await page.goto("/");
   await expect(
     page.getByRole("heading", { level: 1, name: "Coder-Life" }),
   ).toBeVisible();
