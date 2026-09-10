@@ -123,9 +123,10 @@ export const achievements: AchievementDefinition[] = [
   },
 ];
 export function unlockAchievements(g: GameData): GameData {
-  const newly = achievements
-    .filter((a) => !g.achievements.includes(a.id) && a.test(g))
-    .map((a) => a.id);
+  const newly = achievements.reduce<string[]>((newly, a) => {
+    if (!g.achievements.includes(a.id) && a.test(g)) newly.push(a.id);
+    return newly;
+  }, []);
   return newly.length
     ? { ...g, achievements: [...g.achievements, ...newly] }
     : g;

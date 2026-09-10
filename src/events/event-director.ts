@@ -15,7 +15,7 @@ import {
   remember,
   requestSearch,
 } from "./encounter-engine";
-import type { GameData, TimeCategory, Vec2 } from "../game/types";
+import type { GameData, TimeCategory, Vec2, WorldEvent } from "../game/types";
 
 const npcsById = new Map(npcs.map((npc) => [npc.id, npc]));
 const randomEventsById = new Map(
@@ -58,21 +58,25 @@ export function selectInterruption(game: GameData, random = Math.random) {
   return weightedPick(pool, random);
 }
 export function selectWorldEvent(game: GameData, random = Math.random) {
-  const pool = randomEvents
-    .filter(
-      (e) =>
+  const pool = randomEvents.reduce<{ item: WorldEvent; weight: number }[]>(
+    (pool, e) => {
+      if (
         !e.followUpOnly &&
         matches(game, e.conditions) &&
-        game.minutes >= (game.cooldowns[e.id] ?? 0),
-    )
-    .map((e) => ({
-      item: e,
-      weight:
-        e.probability *
-        (["production", "deploy"].includes(e.id)
-          ? 1 + game.technicalDebt / 20
-          : 1),
-    }));
+        game.minutes >= (game.cooldowns[e.id] ?? 0)
+      )
+        pool.push({
+          item: e,
+          weight:
+            e.probability *
+            (["production", "deploy"].includes(e.id)
+              ? 1 + game.technicalDebt / 20
+              : 1),
+        });
+      return pool;
+    },
+    [],
+  );
   return weightedPick(pool, random);
 }
 export function expireSearch(game: GameData, zone?: string): GameData {

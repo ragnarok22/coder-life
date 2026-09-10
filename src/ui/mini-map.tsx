@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { MapPin } from "lucide-react";
 import { bounds, obstacles, objects } from "../data/world";
 import { runtime } from "../game/runtime";
@@ -42,21 +42,22 @@ export function MiniMap() {
             fill="#9cae98"
           />
         ))}
-        {objects
-          .filter(
-            (o) =>
-              o.location === location &&
-              ["desk", "exit", "coffee"].includes(o.kind),
+        {objects.reduce<ReactNode[]>((markers, o) => {
+          if (
+            o.location === location &&
+            ["desk", "exit", "coffee"].includes(o.kind)
           )
-          .map((o) => (
-            <circle
-              key={o.id}
-              cx={o.position[0]}
-              cy={o.position[1]}
-              r={0.55}
-              fill={o.kind === "coffee" ? "#d68b56" : "#447959"}
-            />
-          ))}
+            markers.push(
+              <circle
+                key={o.id}
+                cx={o.position[0]}
+                cy={o.position[1]}
+                r={0.55}
+                fill={o.kind === "coffee" ? "#d68b56" : "#447959"}
+              />,
+            );
+          return markers;
+        }, [])}
         <circle
           ref={dot}
           r={0.53}
