@@ -20,6 +20,20 @@ pnpm preview      # Inspect the static production build locally
 
 Deploy the contents of `dist/` to any static host. Relative asset paths support subdirectories. All fonts, JavaScript and Rapier WASM are bundled locally. There are no runtime CDN assets, accounts or remote databases.
 
+### Search engines and link previews
+
+Set `SITE_URL` to the full public homepage URL before building. Include the path if the game is hosted in a subdirectory. You can copy `.env.example` to `.env.production.local`, or set the environment variable in your hosting provider's build settings.
+
+```sh
+SITE_URL=https://your-domain.com/coder-life/ pnpm build
+```
+
+Use your actual deployment URL in place of the example. The build generates a canonical link, Open Graph and Twitter metadata, VideoGame JSON-LD, `robots.txt`, and a single-page `sitemap.xml`. The share image is `public/social-preview.png` (1200 × 630); its editable source is `public/social-preview.svg`. Metadata copy lives in `src/data/site.ts`.
+
+`pnpm build` also prerenders the real menu into `dist/index.html`, so its content is readable without JavaScript. React replaces this static menu with the interactive game on startup; the 3D scene stays lazy-loaded. JavaScript and WebGL are required to play. The build script uses Node's native TypeScript support (Node 22.18+ or 24+).
+
+Without `SITE_URL`, local builds still work but omit canonical URLs, absolute social image URLs, and the sitemap. A build warning reminds you to configure it for deployment. For subdirectory hosting, merge the generated sitemap directive into the host's **origin-root** `/robots.txt`; crawlers only discover robots rules there. After deployment, submit the sitemap URL to Google Search Console and Bing Webmaster Tools.
+
 ## Play Day 1
 
 1. Start a **New game**, then press **E** to wake up at 08:00.
