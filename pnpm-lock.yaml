@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@dimforge/rapier3d':
-        specifier: 0.19.2
-        version: 0.19.2
+        specifier: 0.20.0
+        version: 0.20.0
       '@fontsource-variable/dm-sans':
         specifier: ^5.3.0
         version: 5.3.0
@@ -186,8 +186,8 @@ packages:
   '@dimforge/rapier3d-compat@0.19.2':
     resolution: {integrity: sha512-AZHL1jqUF55QJkJyU1yKeh4ImX2J93bVLIezT1+o0FZqTix6O06MOaqpKoJ4MmbDCsoZmwO+qc471/SDMDm2AA==}
 
-  '@dimforge/rapier3d@0.19.2':
-    resolution: {integrity: sha512-+2WC+PeZXiv7cBfHTpEFgAhAhHUBdTE7K7ngx3EHEd6Gq9alIiJQoSE2xdxRqRCzFs77NFFvQcXUp9j9Z5HUcQ==}
+  '@dimforge/rapier3d@0.20.0':
+    resolution: {integrity: sha512-Tj5dwOG5kXgcN/JRgOLTk64UFBd9KkaCAsWHcmPXOcyuBX6Vo7/ptSwS6zW++NvZebjJOW9/njmIqTM4VsaUog==}
 
   '@eslint-community/eslint-utils@4.10.1':
     resolution: {integrity: sha512-cuadcxVFE8sDK6iWJbs8Sn0av2Nrh2QSGQhVlBW9AaAHqHwjWsZHT8LJ4hFGPh7ASBV2deFdM7H/DPjulmh8rg==}
@@ -1553,7 +1553,7 @@ snapshots:
 
   '@dimforge/rapier3d-compat@0.19.2': {}
 
-  '@dimforge/rapier3d@0.19.2': {}
+  '@dimforge/rapier3d@0.20.0': {}
 
   '@eslint-community/eslint-utils@4.10.1(eslint@10.10.0)':
     dependencies:
