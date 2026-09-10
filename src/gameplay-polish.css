@@ -22,7 +22,11 @@
   opacity: 0.5;
 }
 .world-dev-controls input[type="checkbox"] {
-  flex: 0;
+  flex: 0 0 14px;
+  width: 14px;
+  min-width: 14px;
+  height: 14px;
+  margin: 0;
   accent-color: #6c8b57;
 }
 .code-health {

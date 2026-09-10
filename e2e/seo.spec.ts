@@ -33,9 +33,12 @@ test("production HTML is readable without JavaScript and includes complete SEO m
     page.getByRole("heading", { level: 1, name: "Coder-Life" }),
   ).toBeVisible();
   await expect(
-    page.getByText("A free 3D developer simulator in your browser.", {
-      exact: false,
-    }),
+    page.getByText(
+      "A free, open-source 3D developer simulator in your browser.",
+      {
+        exact: false,
+      },
+    ),
   ).toBeVisible();
   await expect(
     page.getByText(/Enable JavaScript to play Coder-Life/),
