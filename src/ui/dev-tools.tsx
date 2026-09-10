@@ -10,6 +10,50 @@ import { recordProgress } from "../game/profile";
 import { applyWorldEvent } from "../events/encounter-engine";
 import type { GameData } from "../game/types";
 
+const update = (patch: Partial<GameData>) =>
+  useGame.setState({ game: { ...useGame.getState().game, ...patch } });
+const setTime = (minutes: number) => {
+  const g = useGame.getState().game,
+    next = clamp(minutes, BALANCE.dayStart, BALANCE.dayEnd - 1),
+    elapsed = g.minutes - BALANCE.dayStart;
+  const time = { ...g.stats.time };
+  if (next >= g.minutes) time.other += next - g.minutes;
+  else
+    for (const category of Object.keys(time) as (keyof typeof time)[])
+      time[category] *= elapsed ? (next - BALANCE.dayStart) / elapsed : 0;
+  update({
+    minutes: next,
+    stats: {
+      ...g.stats,
+      time,
+      workMinutes: time.coding,
+      wastedMinutes: next - BALANCE.dayStart - time.coding,
+    },
+    dialogue: null,
+    search: null,
+  });
+};
+const endDay = () => {
+  const s = useGame.getState();
+  const finished = advance(
+    {
+      ...s.game,
+      awake: true,
+      dialogue: null,
+      working: false,
+      hidingZone: null,
+    },
+    BALANCE.dayEnd - s.game.minutes,
+  );
+  useGame.setState({
+    game: finished,
+    screen: "results",
+    seeking: null,
+    profile: recordProgress(s.profile, finished),
+  });
+  void useGame.getState().save();
+};
+
 /** This module is only dynamically imported from the development branch in app.tsx. */
 export default function DevTools() {
   const [open, setOpen] = useState(false),
@@ -28,49 +72,6 @@ export default function DevTools() {
     window.addEventListener("keydown", key);
     return () => window.removeEventListener("keydown", key);
   }, []);
-  const update = (patch: Partial<GameData>) =>
-    useGame.setState({ game: { ...useGame.getState().game, ...patch } });
-  const setTime = (minutes: number) => {
-    const g = useGame.getState().game,
-      next = clamp(minutes, BALANCE.dayStart, BALANCE.dayEnd - 1),
-      elapsed = g.minutes - BALANCE.dayStart;
-    const time = { ...g.stats.time };
-    if (next >= g.minutes) time.other += next - g.minutes;
-    else
-      for (const category of Object.keys(time) as (keyof typeof time)[])
-        time[category] *= elapsed ? (next - BALANCE.dayStart) / elapsed : 0;
-    update({
-      minutes: next,
-      stats: {
-        ...g.stats,
-        time,
-        workMinutes: time.coding,
-        wastedMinutes: next - BALANCE.dayStart - time.coding,
-      },
-      dialogue: null,
-      search: null,
-    });
-  };
-  const endDay = () => {
-    const s = useGame.getState();
-    const finished = advance(
-      {
-        ...s.game,
-        awake: true,
-        dialogue: null,
-        working: false,
-        hidingZone: null,
-      },
-      BALANCE.dayEnd - s.game.minutes,
-    );
-    useGame.setState({
-      game: finished,
-      screen: "results",
-      seeking: null,
-      profile: recordProgress(s.profile, finished),
-    });
-    void useGame.getState().save();
-  };
   return (
     <div className="dev-tools">
       <button
@@ -116,9 +117,10 @@ export default function DevTools() {
               "reputation",
             ] as const
           ).map((key) => (
-            <label key={key}>
-              {key}
+            <div className="dev-control-row" key={key}>
+              <label htmlFor={`dev-${key}`}>{key}</label>
               <input
+                id={`dev-${key}`}
                 type="range"
                 min="0"
                 max="100"
@@ -138,8 +140,8 @@ export default function DevTools() {
                   });
                 }}
               />
-              <output>{Math.round(game[key])}</output>
-            </label>
+              <output htmlFor={`dev-${key}`}>{Math.round(game[key])}</output>
+            </div>
           ))}
           <label>
             NPC
@@ -151,9 +153,10 @@ export default function DevTools() {
               ))}
             </select>
           </label>
-          <label>
-            Relationship
+          <div className="dev-control-row">
+            <label htmlFor="dev-relationship">Relationship</label>
             <input
+              id="dev-relationship"
               type="range"
               min="-100"
               max="100"
@@ -167,8 +170,10 @@ export default function DevTools() {
                 })
               }
             />
-            <output>{game.relations[npc] ?? 0}</output>
-          </label>
+            <output htmlFor="dev-relationship">
+              {game.relations[npc] ?? 0}
+            </output>
+          </div>
           <label>
             Teleport
             <select
