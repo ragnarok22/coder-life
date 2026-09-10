@@ -2,6 +2,19 @@
 @import "@fontsource/ibm-plex-mono/400.css";
 @import "@fontsource/ibm-plex-mono/500.css";
 
+dialog.dialogue-native {
+  position: fixed;
+  inset: auto 0 62px;
+  margin: 0 auto;
+  max-width: min(680px, calc(100vw - 28px));
+  max-height: calc(100svh - 100px);
+  color: var(--ink);
+  pointer-events: auto;
+}
+dialog.dialogue-native::backdrop {
+  background: linear-gradient(#2c433108 10%, #2c43313a 60%, #273c3166);
+}
+
 :root {
   font-family: "DM Sans Variable", sans-serif;
   color: #303d34;
@@ -24,6 +37,12 @@
 body {
   margin: 0;
   min-width: 360px;
+}
+.javascript-notice {
+  padding: 16px 5.2%;
+  background: #e8e9dc;
+  color: var(--ink);
+  line-height: 1.5;
 }
 button,
 a,

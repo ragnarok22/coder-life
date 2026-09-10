@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import {
   BatteryMedium,
   Flame,
@@ -100,16 +100,23 @@ function WorkPanel() {
 }
 function Dialogue() {
   const id = useGame((s) => s.game.dialogue);
+  const screen = useGame((s) => s.screen);
+  const dialog = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    const element = dialog.current;
+    if (screen === 'playing') element?.showModal();
+    else element?.close();
+    return () => element?.close();
+  }, [screen, id]);
   const interruption = interruptions.find((i) => i.id === id);
   if (!interruption) return null;
   const npc = npcs.find((n) => n.id === interruption.npc);
   return (
-    <div className="dialogue-backdrop">
-      <section
-        className="dialogue-card"
+      <dialog
+        ref={dialog}
+        className="dialogue-card dialogue-native"
         aria-label={interruption.name}
-        role="dialog"
-        aria-modal="true"
+        onCancel={event => { event.preventDefault(); useGame.getState().pause(); }}
       >
         <div className="dialogue-top">
           <div
@@ -154,8 +161,7 @@ function Dialogue() {
         <div className="dialogue-footnote">
           Your choices matter. Mostly to your calendar.
         </div>
-      </section>
-    </div>
+      </dialog>
   );
 }
 function TouchControls() {

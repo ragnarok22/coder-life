@@ -71,11 +71,11 @@ export function MainMenu() {
           <div className="eyebrow hero-eyebrow">
             <span className="tiny-line" /> A WORK-LIFE IMBALANCE SIMULATOR
           </div>
-          <h1>
+          <h1 aria-label="Coder-Life">
             CODER<span className="title-hyphen">-</span>
             <br />
             <span className="life-word">
-              LIFE<span className="title-cursor">_</span>
+              LIFE<span className="title-cursor" aria-hidden="true">_</span>
             </span>
           </h1>
           <p className="hero-tagline">
@@ -84,9 +84,9 @@ export function MainMenu() {
             Survive <span>“a quick question.”</span>
           </p>
           <p className="hero-description">
-            A little office. A lot of interruptions.
+            A free 3D developer simulator in your browser.
             <br />
-            One developer trying to get something done.
+            Code, drink coffee, and survive office interruptions.
           </p>
           <nav className="menu-actions" aria-label="Main menu">
             <button className="start-button" onClick={newGame}>
@@ -145,7 +145,13 @@ export function MainMenu() {
                 </div>
               }
             >
-              <MenuScene />
+              {import.meta.env.SSR ? (
+                <div className="scene-loading">
+                  <Terminal /> Your first Monday is waiting.
+                </div>
+              ) : (
+                <MenuScene />
+              )}
             </Suspense>
           </div>
           <div className="mission-note">

@@ -65,6 +65,7 @@ src/
   data/content.ts         Day, career, NPC schedules, interruptions, random events
   data/world.ts           Shared world bounds, obstacles and interactable objects
   entities/               Rapier player controller, NPC brains, character/animation adapter
+  events/                 Weighted event selection, eligibility and cooldown gates
   game/                   Pure rules, Zustand orchestration, input, audio, persistence
   rendering/              3D worlds, menu diorama, reusable props and lighting
   ui/                     Menus, HUD, map, work panel, dialogue and results

@@ -2,9 +2,9 @@ import { create } from "zustand";
 import {
   GAME_MINUTES_PER_SECOND,
   interruptions,
-  randomEvents,
 } from "../data/content";
 import { objects } from "../data/world";
+import { selectInterruption, selectWorldEvent } from "../events/event-director";
 import {
   advance,
   applyEffects,
@@ -27,7 +27,7 @@ const defaultPrefs: Preferences = {
 function readPreferences(): Preferences {
   try {
     const p = JSON.parse(
-      localStorage.getItem("coder-life:preferences") ?? "{}",
+      localStorage.getItem("coder-life:preferences:v1") ?? localStorage.getItem("coder-life:preferences") ?? "{}",
     );
     const result = { ...defaultPrefs };
     for (const k of ["master", "music", "effects", "sensitivity"] as const)
@@ -196,36 +196,11 @@ export const useGame = create<Store>((set, get) => ({
           nextEventAt: game.minutes + (game.minutes > 780 ? 22 : 40),
         };
         if (!get().seeking) {
-          const eligible = interruptions.filter(
-            (i) =>
-              i.id !== "commute" &&
-              matches(game, i.conditions) &&
-              game.minutes >= (game.cooldowns[i.id] ?? 0),
-          );
-          // Data-defined probability and previous decisions affect who asks next.
-          const weighted = eligible.map((event) => ({
-            event,
-            weight:
-              event.probability +
-              (game.futureChance[event.npc] ?? 0) +
-              Math.max(0, game.relations[event.npc] ?? 0) / 1000,
-          }));
-          const total = weighted.reduce((sum, entry) => sum + entry.weight, 0);
-          let roll = Math.random() * Math.max(1, total);
-          for (const entry of weighted) {
-            roll -= entry.weight;
-            if (roll <= 0) {
-              set({ seeking: entry.event.id });
-              break;
-            }
-          }
+          const event = selectInterruption(game);
+          if (event) set({ seeking: event.id });
         }
-        for (const event of randomEvents) {
-          if (
-            matches(game, event.conditions) &&
-            game.minutes >= (game.cooldowns[event.id] ?? 0) &&
-            Math.random() < event.probability
-          ) {
+        const event = selectWorldEvent(game);
+        if (event) {
             game = applyEffects(game, event.effects);
             game = {
               ...game,
@@ -238,8 +213,6 @@ export const useGame = create<Store>((set, get) => ({
               },
             };
             get().notify(event.title, event.message);
-            break;
-          }
         }
       }
     }
@@ -440,7 +413,7 @@ export const useGame = create<Store>((set, get) => ({
     audio.configure(preferences);
     try {
       localStorage.setItem(
-        "coder-life:preferences",
+        "coder-life:preferences:v1",
         JSON.stringify(preferences),
       );
     } catch {

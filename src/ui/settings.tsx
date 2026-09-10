@@ -18,15 +18,16 @@ export function Settings({ onClose }: { onClose: () => void }) {
           <Volume2 size={17} /> Sound
         </h3>
         {(["master", "music", "effects"] as const).map((key) => (
-          <label className="slider-row" key={key}>
-            <span>
+          <div className="slider-row" key={key}>
+            <label htmlFor={`volume-${key}`}>
               {key === "master"
                 ? "Master volume"
                 : key === "music"
                   ? "Music"
                   : "Sound effects"}
-            </span>
+            </label>
             <input
+              id={`volume-${key}`}
               type="range"
               min="0"
               max="1"
@@ -35,16 +36,17 @@ export function Settings({ onClose }: { onClose: () => void }) {
               onChange={(e) => update({ [key]: Number(e.target.value) })}
             />
             <output>{Math.round(preferences[key] * 100)}%</output>
-          </label>
+          </div>
         ))}
       </div>
       <div className="settings-section">
         <h3>
           <Mouse size={17} /> Controls
         </h3>
-        <label className="slider-row">
-          <span>Mouse sensitivity</span>
+        <div className="slider-row">
+          <label htmlFor="mouse-sensitivity">Mouse sensitivity</label>
           <input
+            id="mouse-sensitivity"
             type="range"
             min=".2"
             max="2"
@@ -53,7 +55,7 @@ export function Settings({ onClose }: { onClose: () => void }) {
             onChange={(e) => update({ sensitivity: Number(e.target.value) })}
           />
           <output>{preferences.sensitivity.toFixed(1)}×</output>
-        </label>
+        </div>
         <p className="fine-print">
           Click and drag to rotate the camera. Scroll to zoom.
         </p>
@@ -103,8 +105,9 @@ export function Settings({ onClose }: { onClose: () => void }) {
             </button>
             <button
               className="danger-button"
-              onClick={() => {
-                void useGame.getState().reset().then(onClose);
+              onClick={async () => {
+                await useGame.getState().reset();
+                if (useGame.getState().saveStatus !== 'error') onClose();
               }}
             >
               Delete progress

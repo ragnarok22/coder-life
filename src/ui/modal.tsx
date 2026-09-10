@@ -24,13 +24,11 @@ export function Modal({
   return (
     <dialog
       ref={dialog}
+      aria-label={title}
       className={`modal ${wide ? "modal-wide" : ""}`}
       onCancel={(e) => {
         e.preventDefault();
         onClose();
-      }}
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
       }}
     >
       <div className="modal-inner">
