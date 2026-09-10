@@ -1,8 +1,24 @@
 # Coder-Life
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-426b50)](LICENSE)
+[![Contributions welcome](https://img.shields.io/badge/Contributions-welcome-ce784c)](CONTRIBUTING.md)
+[![Contributor Covenant 2.1](https://img.shields.io/badge/Contributor_Covenant-2.1-426b50)](CODE_OF_CONDUCT.md)
+[![React 19](https://img.shields.io/badge/React-19-149eca?logo=react&logoColor=white)](https://react.dev/)
+[![TypeScript 6](https://img.shields.io/badge/TypeScript-6-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+
 **Write code. Drink coffee. Survive “a quick question.”**
 
-A playable, low-poly, third-person browser game about a developer's first Monday. Everything runs on the device: physics, NPC navigation, decisions, time, audio and saves. The production build is a set of static files.
+A free, open-source, low-poly, third-person browser game about a developer's first Monday. Everything runs on the device: physics, NPC navigation, decisions, time, audio and saves. The production build is a set of static files.
+
+Explore the source on [GitHub](https://github.com/ragnarok22/coder-life). Coder-Life is released under the [MIT License](LICENSE).
+
+## Community
+
+Everyone is welcome to help improve the game, whether through bug reports, gameplay feedback, documentation, code, or art.
+
+- **[Contributing guide](CONTRIBUTING.md):** Set up your environment, follow the development conventions, run the relevant checks, and submit a pull request.
+- **[Code of Conduct](CODE_OF_CONDUCT.md):** Read our community standards and learn how to report concerns privately. We follow Contributor Covenant 2.1.
+- **[Issues](https://github.com/ragnarok22/coder-life/issues):** Report a bug, suggest an improvement, or find something to work on.
 
 ## Milestone: Day 1 Gameplay Polish
 
@@ -28,6 +44,8 @@ Five decision-dependent chains are included, with additional variations:
 The director allows one dialogue and one NPC search at a time, limits pending consequences to four, deduplicates follow-ups, respects cooldowns and grace periods, and expires incompatible or late events. NPC courtesy steering and non-blocking sensor colliders prevent characters from trapping the player in narrow passages.
 
 ## Run
+
+Use **Node.js 22.18+ or 24+** and **pnpm**. For the full fork-and-clone workflow, see [Set up your environment](CONTRIBUTING.md#set-up-your-environment).
 
 ```sh
 pnpm install
