@@ -1,5 +1,4 @@
 import {
-  officeAreas,
   officeDesks,
   officePartitions,
   officeSteps,
@@ -140,7 +139,13 @@ function Partition({
     <group position={[p.x, 0, p.z]}>
       <Box position={[0, 0.42, 0]} size={[p.w, 0.84, p.d]} color={p.color} />
       <mesh position={[0, (p.h + 0.84) / 2, 0]}>
-        <boxGeometry args={[p.w, p.h - 0.84, p.d * 0.7]} />
+        <boxGeometry
+          args={[
+            alongX ? p.w : p.w * 0.7,
+            p.h - 0.84,
+            alongX ? p.d * 0.7 : p.d,
+          ]}
+        />
         <meshStandardMaterial
           color="#bad8cc"
           transparent
@@ -332,15 +337,6 @@ function OfficeUtilityRoom() {
 export function OfficeEnvironment() {
   return (
     <StaticMesh>
-      {officeAreas.map((area) => (
-        <Box
-          key={area.id}
-          position={[area.x, 0.022, area.z]}
-          size={[area.w, 0.008, area.d]}
-          color={area.floor}
-          castShadow={false}
-        />
-      ))}
       <Box
         position={[0, 0.035, 0]}
         size={[0.1, 0.015, 18]}

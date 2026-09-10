@@ -6,6 +6,7 @@ import { Box, Sign } from "./primitives";
 import { Plant, WindowPanel } from "./props";
 import { Character } from "../entities/character";
 import { OfficeEnvironment } from "./office";
+import { officeFloorColor } from "../data/office-layout";
 
 function Floor({ location }: { location: Location }) {
   const { w, d } = bounds[location];
@@ -29,9 +30,7 @@ function Floor({ location }: { location: Location }) {
                     ? (x + z) % 2
                       ? "#c1c3b0"
                       : "#cbcbb9"
-                    : (x + z) % 2
-                      ? "#d9ddca"
-                      : "#e1e3d1"
+                    : officeFloorColor(x - w / 2 + 0.5, z - d / 2 + 0.5)
               }
             />
           )),

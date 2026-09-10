@@ -1,4 +1,4 @@
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, useLayoutEffect } from "react";
 import type { RefObject } from "react";
 import { useFrame } from "@react-three/fiber";
 import { useRapier } from "@react-three/rapier";
@@ -16,6 +16,10 @@ export function PlayerCamera({ target }: { target: RefObject<Group | null> }) {
   const { world, rapier } = useRapier();
   const rigRef = useRef<CameraRig | null>(null),
     lookRef = useRef<Vector3 | null>(null);
+  useLayoutEffect(() => {
+    rigRef.current = createCameraRig();
+    lookRef.current = new Vector3();
+  }, []);
   const queries = useMemo(() => {
     const shape = new rapier.Ball(C.collisionRadius),
       rotation = { x: 0, y: 0, z: 0, w: 1 };
@@ -50,8 +54,9 @@ export function PlayerCamera({ target }: { target: RefObject<Group | null> }) {
       camera.lookAt(0, 0, 0);
       return;
     }
-    const rig = (rigRef.current ??= createCameraRig()),
-      look = (lookRef.current ??= new Vector3());
+    const rig = rigRef.current,
+      look = lookRef.current;
+    if (!rig || !look) return;
     // Read the interpolated render transform, not a staircase of fixed physics positions.
     target.current.getWorldPosition(look);
     look.y += C.lookHeight;

@@ -195,6 +195,13 @@ export const officeAreas: OfficeArea[] = [
     arrival: [-2.4, 7.4],
   },
 ];
+export function officeFloorColor(x: number, z: number) {
+  return (
+    officeAreas.find(
+      (a) => Math.abs(x - a.x) <= a.w / 2 && Math.abs(z - a.z) <= a.d / 2,
+    )?.floor ?? "#e4e3d1"
+  );
+}
 export interface OfficePartition extends Obstacle {
   id: string;
   color: string;
