@@ -1,5 +1,18 @@
 import type { Location, Vec2 } from "../game/types";
 import { officeAreas } from "./office-layout";
+
+const additionalZones = [];
+for (const area of officeAreas) {
+  if (["small-meeting", "utility", "lounge"].includes(area.id)) {
+    additionalZones.push({
+      ...area,
+      hide: true,
+      entryChance: area.id === "utility" ? 0.1 : 0.45,
+      description: "A short pause, with another route back to work.",
+    });
+  }
+}
+
 export const zones = [
   {
     id: "bathroom",
@@ -45,14 +58,7 @@ export const zones = [
     entryChance: 1,
     description: "The first place everybody looks.",
   },
-  ...officeAreas
-    .filter((a) => ["small-meeting", "utility", "lounge"].includes(a.id))
-    .map((a) => ({
-      ...a,
-      hide: true,
-      entryChance: a.id === "utility" ? 0.1 : 0.45,
-      description: "A short pause, with another route back to work.",
-    })),
+  ...additionalZones,
 ] as const;
 export function zoneAt(position: Vec2, location: Location) {
   return location === "office"
