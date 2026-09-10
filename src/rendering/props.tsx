@@ -36,7 +36,7 @@ export function Plant({
         [0, 1.08, 0.2],
       ].map(([x, y, z], i) => (
         <mesh
-          key={i}
+          key={`${x},${y},${z}`}
           position={[x, y, z]}
           rotation={[0, i, i % 2 ? -0.55 : 0.55]}
           scale={[0.25, 0.48, 0.13]}

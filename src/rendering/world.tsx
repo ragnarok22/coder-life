@@ -59,7 +59,7 @@ function Office() {
       ))}
       {OFFICE_DESKS.map(([x, z], i) => (
         <Desk
-          key={i}
+          key={`${x},${z}`}
           position={[x, 0, z]}
           player={i === 2}
           rotation={i === 2 ? 0 : Math.PI}
@@ -242,9 +242,9 @@ export function World({ location }: { location: Location }) {
     <>
       <RigidBody type="fixed" colliders={false}>
         <CuboidCollider args={[w / 2, 0.2, d / 2]} position={[0, -0.2, 0]} />
-        {obstacles[location].map((o, i) => (
+        {obstacles[location].map((o) => (
           <CuboidCollider
-            key={i}
+            key={`${location}:${o.x},${o.z}:${o.w},${o.d},${o.h}`}
             args={[o.w / 2, o.h / 2, o.d / 2]}
             position={[o.x, o.h / 2, o.z]}
           />

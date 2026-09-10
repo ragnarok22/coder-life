@@ -5,8 +5,24 @@ import { endings } from "../data/endings";
 import { npcs } from "../data/content";
 import { BALANCE } from "../data/balance";
 import { clock } from "../game/rules";
+import type { GameData } from "../game/types";
 import { Modal } from "./modal";
 import { useMemo } from "react";
+
+type HistoryEntry = GameData["history"][number];
+
+// Repeated events can share every field; retained entries keep their object identity.
+const historyKeys = new WeakMap<HistoryEntry, number>();
+let nextHistoryKey = 0;
+
+function historyKey(entry: HistoryEntry) {
+  let key = historyKeys.get(entry);
+  if (key === undefined) {
+    key = nextHistoryKey++;
+    historyKeys.set(entry, key);
+  }
+  return key;
+}
 
 export function Journal({ onClose }: { onClose: () => void }) {
   const game = useGame((s) => s.game),
@@ -115,8 +131,8 @@ export function Journal({ onClose }: { onClose: () => void }) {
         <>
           <h3 className="journal-heading">Today, in questionable decisions</h3>
           <ol className="day-timeline">
-            {game.history.slice(-12).map((e, i) => (
-              <li key={`${e.id}-${e.at}-${i}`}>
+            {game.history.slice(-12).map((e) => (
+              <li key={historyKey(e)}>
                 <time>{clock(e.at)}</time>
                 <span>
                   {e.title}
