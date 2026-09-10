@@ -218,7 +218,7 @@ export const npcs: NpcDefinition[] = [
     ...npc,
     ...(home
       ? {
-          position: home.position,
+          position: npc.id === "hr" ? npc.position : home.position,
           desk: home.position,
           workHeading: home.heading,
           seated: home.seated,

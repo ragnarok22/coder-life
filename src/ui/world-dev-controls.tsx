@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   sceneDebug,
   changeSceneDebug,
@@ -23,7 +23,7 @@ export function WorldDevControls() {
   const debug = useSceneDebug(),
     [room, setRoom] = useState("developers"),
     [npc, setNpc] = useState("manager"),
-    [reroll, setReroll] = useState(0);
+    reroll = useRef(0);
   const seed = useGame((s) => s.game.seed),
     appearance =
       debug.appearances[npc] ??
@@ -168,8 +168,8 @@ export function WorldDevControls() {
       <button
         disabled={!!importantAppearances[npc]}
         onClick={() => {
-          const next = reroll + 1;
-          setReroll(next);
+          const next = reroll.current + 1;
+          reroll.current = next;
           changeSceneDebug({
             appearances: {
               ...debug.appearances,

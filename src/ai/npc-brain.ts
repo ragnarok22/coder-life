@@ -77,6 +77,11 @@ export function stepBrain(
   if (game.dialogue || game.finished) {
     b.state =
       getEncounter(game.dialogue)?.npc === npc.id ? "talking" : "waiting";
+    if (b.state === "talking")
+      b.heading = Math.atan2(
+        player[0] - b.position[0],
+        player[1] - b.position[1],
+      );
     return false;
   }
   const search = game.search,

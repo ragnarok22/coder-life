@@ -11,6 +11,18 @@ Only **Day 1** is playable, with branching encounters, coding decisions, achieve
 
 Built with React, TypeScript, Three.js, and Rapier. Gameplay runs entirely on your device.
 
+## The office, upgraded
+
+The Day 1 office now has **39% more floor area** (30×20 units), with a developer zone, HR/accounting, two meeting spaces, a manager suite, print/copy area, kitchen and coffee corner, reception, lounge, bathroom and utility/server room. Central, western and southern routes let you change course when someone comes looking for you. Floor palettes, furniture, plants and landmarks distinguish the spaces.
+
+Movement has configurable acceleration, braking, progressive turning and camera-relative controls. The shoulder-height camera smooths its target and orbit separately, sweeps a padded volume against obstacles, and lifts automatically in tight spaces. Walk/run animation cadence follows actual movement, including stopping against a wall.
+
+The default cast has **12 NPCs** with modular silhouettes, skin tones, 11 hairstyles, coordinated outfits and accessories. Important characters keep their visual identities; secondary staff use seeded variations. Look out for **Jules, the Rockstar Developer**, at the triple-monitor setup, and **Sterling, the Corporate Visionary**, with the teal blazer and tablet.
+
+Presentation tuning lives in `src/data/presentation.ts`, layout/collision geometry in `src/data/office-layout.ts`, and appearance definitions in `src/data/appearances.ts`. Static scenery and character parts are batched; floor tiles are instanced and AI/perception updates are throttled. Existing saves that overlap new furniture are moved to the nearest clear floor on Continue.
+
+In development, **F2 → World / Camera / Cast** offers room teleportation, office overview, camera-ray/collider/navigation overlays, NPC freezing, ambient spawning up to 15, and appearance inspection. These controls are excluded from production.
+
 ## Run locally
 
 Requires **Node.js 22.18+ or 24+** and **pnpm**.

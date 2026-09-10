@@ -7,6 +7,55 @@ import { walkable } from "../src/ai/navigation";
 import type { Vec2 } from "../src/game/types";
 const manager = npcs.find((n) => n.id === "manager")!;
 describe("NPC pursuit and courtesy", () => {
+  it("supports short ambient conversations away from doorways and preempts them for a request", () => {
+    const npc = npcs.find((n) => n.id === "coworker")!,
+      peerNpc = npcs.find((n) => n.id === "intern")!;
+    const a = createBrain(npc, 7),
+      b = createBrain(peerNpc, 8);
+    a.position = [7.4, 4.5];
+    b.position = [8.4, 4.5];
+    a.timer = 0;
+    a.socialAt = 0;
+    const game = {
+      ...initialGame(),
+      awake: true,
+      location: "office" as const,
+      minutes: 750,
+    };
+    stepBrain(a, npc, game, [-6, 3.4], 0.1, [a, b]);
+    stepBrain(b, peerNpc, game, [-6, 3.4], 0.1, [a, b]);
+    expect(a.state).toBe("talking");
+    expect(b.state).toBe("talking");
+    expect(a.socialUntil - a.elapsed).toBeLessThanOrEqual(6);
+    stepBrain(a, npc, requestSearch(game, "monitor"), [-6, 3.4], 0.1, [a, b]);
+    expect(a.state).not.toBe("talking");
+  });
+  it("keeps twelve independently scheduled NPCs on walkable floor in the expanded office", () => {
+    const brains = npcs.map((n) => createBrain(n, 123));
+    const initial = brains.map((b) => [...b.position]);
+    const game = {
+      ...initialGame(),
+      awake: true,
+      location: "office" as const,
+      minutes: 540,
+    };
+    for (let step = 0; step < 650; step++) {
+      game.minutes = 540 + step * 0.05;
+      for (let i = 0; i < brains.length; i++) {
+        stepBrain(brains[i], npcs[i], game, [-6, 3.4], 0.1, brains);
+        expect(walkable(brains[i].position, "office"), npcs[i].id).toBe(true);
+      }
+    }
+    expect(
+      brains.filter(
+        (b, i) =>
+          Math.hypot(
+            b.position[0] - initial[i][0],
+            b.position[1] - initial[i][1],
+          ) > 1,
+      ).length,
+    ).toBeGreaterThanOrEqual(5);
+  });
   it("an approaching NPC waits through the post-decision grace period", () => {
     const brain = createBrain(manager, 4),
       player: Vec2 = [-6, 3.4];
