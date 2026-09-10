@@ -17,6 +17,11 @@ import {
 } from "./encounter-engine";
 import type { GameData, TimeCategory, Vec2 } from "../game/types";
 
+const npcsById = new Map(npcs.map((npc) => [npc.id, npc]));
+const randomEventsById = new Map(
+  randomEvents.map((event) => [event.id, event]),
+);
+
 function weightedPick<T>(
   pool: { item: T; weight: number }[],
   random: () => number,
@@ -39,7 +44,7 @@ export function selectInterruption(game: GameData, random = Math.random) {
       game.minutes < (game.cooldowns[`npc:${event.npc}`] ?? 0)
     )
       continue;
-    const personality = npcs.find((n) => n.id === event.npc)?.personality;
+    const personality = npcsById.get(event.npc)?.personality;
     const relationship = game.relations[event.npc] ?? 0;
     const weight =
       event.probability *
@@ -202,7 +207,7 @@ export function tickDay(
       );
       if (due) {
         const encounter = getEncounter(due.eventId),
-          event = randomEvents.find((e) => e.id === due.eventId);
+          event = randomEventsById.get(due.eventId);
         const needsDesk = encounter?.category === "coding";
         if (!needsDesk || game.working) {
           game = {

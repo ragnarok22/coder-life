@@ -10,6 +10,10 @@ import type {
   WorldEvent,
 } from "../game/types";
 
+const randomEventsById = new Map(
+  randomEvents.map((event) => [event.id, event]),
+);
+
 const categories: Record<Interruption["category"], TimeCategory> = {
   support: "ITSupport",
   meeting: "meetings",
@@ -50,8 +54,7 @@ export function scheduleFollowUps(
     )
       continue;
     const target =
-      getEncounter(next.eventId) ??
-      randomEvents.find((e) => e.id === next.eventId);
+      getEncounter(next.eventId) ?? randomEventsById.get(next.eventId);
     if (!target) continue;
     const at = Math.max(
       game.minutes + randomInt(next.delay, () => random.next()),
