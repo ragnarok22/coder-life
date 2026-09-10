@@ -169,6 +169,166 @@ function Partition({
     </group>
   );
 }
+function OfficeMeetingRooms() {
+  return (
+    <>
+      <Box position={[9, 1, -4.5]} size={[4.5, 0.15, 2]} color="#d7bc8d" />
+      {[-1.7, 1.7].map((x) => (
+        <Box
+          key={x}
+          position={[9 + x, 0.48, -4.5]}
+          size={[0.16, 0.95, 1.6]}
+          color="#708b80"
+        />
+      ))}
+      {[7.6, 9, 10.4].map((x) => (
+        <group key={x}>
+          <Chair position={[x, 0, -6]} color="#6c938b" rotation={Math.PI} />
+          <Chair position={[x, 0, -3]} color="#6c938b" />
+          <Mug position={[x, 1.09, -4.9]} color="#f0e7cf" />
+        </group>
+      ))}
+      <Laptop position={[9, 1.13, -4.35]} />
+      <Box position={[-4, 1, -8.3]} size={[3, 0.14, 1.1]} color="#d2b884" />
+      <Box
+        position={[-4, 0.48, -8.3]}
+        size={[0.15, 0.95, 0.8]}
+        color="#8c9c7b"
+      />
+      <Chair position={[-4, 0, -6.95]} color="#b7a06c" />
+      <Chair
+        position={[-5.9, 0, -8.2]}
+        color="#b7a06c"
+        rotation={-Math.PI / 2}
+      />
+      <Chair
+        position={[-2.1, 0, -8.2]}
+        color="#b7a06c"
+        rotation={Math.PI / 2}
+      />
+    </>
+  );
+}
+
+function OfficeKitchen() {
+  return (
+    <>
+      <CoffeeStation position={[9.9, 0, 2.2]} />
+      <Box position={[13.5, 0.6, 4]} size={[1.1, 1.2, 3.1]} color="#b5bda0" />
+      <Box position={[13.5, 1.23, 4]} size={[1.15, 0.1, 3.2]} color="#eddec1" />
+      <group position={[13.4, 1.3, 4.7]} rotation={[0, -Math.PI / 2, 0]}>
+        <Box position={[0, 0.3, 0]} size={[1, 0.6, 0.68]} color="#ebe7d4" />
+        <Box
+          position={[-0.1, 0.3, 0.35]}
+          size={[0.67, 0.38, 0.025]}
+          color="#43554a"
+        />
+        <Box
+          position={[0.37, 0.36, 0.35]}
+          size={[0.07, 0.15, 0.035]}
+          color="#cc9b5b"
+        />
+      </group>
+      <Box position={[10, 1, 6]} size={[1.5, 2, 1]} color="#e0e5d0" />
+      <Box
+        position={[10, 1.25, 6.52]}
+        size={[1.3, 0.035, 0.025]}
+        color="#96aa91"
+      />
+      <Box
+        position={[10.55, 1.5, 6.56]}
+        size={[0.06, 0.4, 0.08]}
+        color="#7f987d"
+      />
+      <Sign
+        text="LUNCH IS A FEATURE"
+        position={[10, 2.4, 6]}
+        width={2.35}
+        height={0.32}
+      />
+      <Box
+        position={[12.7, 0.98, 7.5]}
+        size={[1.8, 0.12, 1.5]}
+        color="#dcc096"
+      />
+      <Cylinder
+        position={[12.7, 0.48, 7.5]}
+        radius={0.13}
+        height={0.95}
+        color="#78907a"
+      />
+      <Chair position={[12.7, 0, 8.6]} color="#d1aa68" />
+      <Mug position={[12.8, 1.05, 7.5]} />
+      {Array.from({ length: 6 }, (_, x) =>
+        Array.from({ length: 7 }, (_, z) => (
+          <Box
+            key={`tile-${x}-${z}`}
+            position={[7.5 + x, 0.029, 1.8 + z]}
+            size={[0.94, 0.006, 0.94]}
+            color={(x + z) % 2 ? "#e7d7b9" : "#ecdcc1"}
+            castShadow={false}
+          />
+        )),
+      )}
+    </>
+  );
+}
+
+function OfficeUtilityRoom() {
+  return (
+    <>
+      <Box
+        position={[-14, 1.15, -8.3]}
+        size={[1.2, 2.3, 1.5]}
+        color="#52666d"
+      />
+      {[0.45, 0.8, 1.15, 1.5, 1.85].map((y) => (
+        <group key={y}>
+          <Box
+            position={[-14, y, -7.535]}
+            size={[1, 0.24, 0.035]}
+            color="#354c53"
+          />
+          <Box
+            position={[-13.64, y, -7.508]}
+            size={[0.07, 0.06, 0.015]}
+            color="#a5c486"
+          />
+        </group>
+      ))}
+      <Box
+        position={[-12.9, 0.9, -9.35]}
+        size={[1.4, 1.8, 0.8]}
+        color="#a3ad99"
+      />
+      <Sign
+        text="PLEASE DO NOT REBOOT"
+        position={[-14, 2.7, -9.85]}
+        width={1.7}
+        height={0.26}
+      />
+      {[
+        [-13.8, -4.7],
+        [-12.8, -4.7],
+        [-13.8, -6.2],
+      ].map(([x, z]) => (
+        <group key={`${x}:${z}`}>
+          <Box
+            position={[x, 0.24, z]}
+            size={[0.7, 0.48, 0.65]}
+            color="#c4a373"
+          />
+          <Box
+            position={[x, 0.485, z]}
+            size={[0.12, 0.01, 0.66]}
+            color="#e6cca0"
+          />
+        </group>
+      ))}
+    </>
+  );
+}
+
 export function OfficeEnvironment() {
   return (
     <StaticMesh>
@@ -254,97 +414,8 @@ export function OfficeEnvironment() {
         width={3.3}
         height={0.43}
       />
-      <Box position={[9, 1, -4.5]} size={[4.5, 0.15, 2]} color="#d7bc8d" />
-      {[-1.7, 1.7].map((x) => (
-        <Box
-          key={x}
-          position={[9 + x, 0.48, -4.5]}
-          size={[0.16, 0.95, 1.6]}
-          color="#708b80"
-        />
-      ))}
-      {[7.6, 9, 10.4].map((x) => (
-        <group key={x}>
-          <Chair position={[x, 0, -6]} color="#6c938b" rotation={Math.PI} />
-          <Chair position={[x, 0, -3]} color="#6c938b" />
-          <Mug position={[x, 1.09, -4.9]} color="#f0e7cf" />
-        </group>
-      ))}
-      <Laptop position={[9, 1.13, -4.35]} />
-      <Box position={[-4, 1, -8.3]} size={[3, 0.14, 1.1]} color="#d2b884" />
-      <Box
-        position={[-4, 0.48, -8.3]}
-        size={[0.15, 0.95, 0.8]}
-        color="#8c9c7b"
-      />
-      <Chair position={[-4, 0, -6.95]} color="#b7a06c" />
-      <Chair
-        position={[-5.9, 0, -8.2]}
-        color="#b7a06c"
-        rotation={-Math.PI / 2}
-      />
-      <Chair
-        position={[-2.1, 0, -8.2]}
-        color="#b7a06c"
-        rotation={Math.PI / 2}
-      />
-      <CoffeeStation position={[9.9, 0, 2.2]} />
-      <Box position={[13.5, 0.6, 4]} size={[1.1, 1.2, 3.1]} color="#b5bda0" />
-      <Box position={[13.5, 1.23, 4]} size={[1.15, 0.1, 3.2]} color="#eddec1" />
-      <group position={[13.4, 1.3, 4.7]} rotation={[0, -Math.PI / 2, 0]}>
-        <Box position={[0, 0.3, 0]} size={[1, 0.6, 0.68]} color="#ebe7d4" />
-        <Box
-          position={[-0.1, 0.3, 0.35]}
-          size={[0.67, 0.38, 0.025]}
-          color="#43554a"
-        />
-        <Box
-          position={[0.37, 0.36, 0.35]}
-          size={[0.07, 0.15, 0.035]}
-          color="#cc9b5b"
-        />
-      </group>
-      <Box position={[10, 1, 6]} size={[1.5, 2, 1]} color="#e0e5d0" />
-      <Box
-        position={[10, 1.25, 6.52]}
-        size={[1.3, 0.035, 0.025]}
-        color="#96aa91"
-      />
-      <Box
-        position={[10.55, 1.5, 6.56]}
-        size={[0.06, 0.4, 0.08]}
-        color="#7f987d"
-      />
-      <Sign
-        text="LUNCH IS A FEATURE"
-        position={[10, 2.4, 6]}
-        width={2.35}
-        height={0.32}
-      />
-      <Box
-        position={[12.7, 0.98, 7.5]}
-        size={[1.8, 0.12, 1.5]}
-        color="#dcc096"
-      />
-      <Cylinder
-        position={[12.7, 0.48, 7.5]}
-        radius={0.13}
-        height={0.95}
-        color="#78907a"
-      />
-      <Chair position={[12.7, 0, 8.6]} color="#d1aa68" />
-      <Mug position={[12.8, 1.05, 7.5]} />
-      {Array.from({ length: 6 }, (_, x) =>
-        Array.from({ length: 7 }, (_, z) => (
-          <Box
-            key={`tile-${x}-${z}`}
-            position={[7.5 + x, 0.029, 1.8 + z]}
-            size={[0.94, 0.006, 0.94]}
-            color={(x + z) % 2 ? "#e7d7b9" : "#ecdcc1"}
-            castShadow={false}
-          />
-        )),
-      )}
+      <OfficeMeetingRooms />
+      <OfficeKitchen />
       <Printer position={[-10.5, 0, -5.5]} />
       <WaterCooler position={[-11.1, 0, 1]} />
       <Files position={[-14, 0, 1]} color="#a4b593" />
@@ -402,54 +473,7 @@ export function OfficeEnvironment() {
         width={1.05}
         height={0.24}
       />
-      <Box
-        position={[-14, 1.15, -8.3]}
-        size={[1.2, 2.3, 1.5]}
-        color="#52666d"
-      />
-      {[0.45, 0.8, 1.15, 1.5, 1.85].map((y) => (
-        <group key={y}>
-          <Box
-            position={[-14, y, -7.535]}
-            size={[1, 0.24, 0.035]}
-            color="#354c53"
-          />
-          <Box
-            position={[-13.64, y, -7.508]}
-            size={[0.07, 0.06, 0.015]}
-            color="#a5c486"
-          />
-        </group>
-      ))}
-      <Box
-        position={[-12.9, 0.9, -9.35]}
-        size={[1.4, 1.8, 0.8]}
-        color="#a3ad99"
-      />
-      <Sign
-        text="PLEASE DO NOT REBOOT"
-        position={[-14, 2.7, -9.85]}
-        width={1.7}
-        height={0.26}
-      />
-      {[
-        [-13.8, -4.7],
-        [-12.8, -4.7],
-        [-13.8, -6.2],
-      ].map(([x, z]) => (
-        <group key={`${x}:${z}`}>
-          <Box
-            position={[x, 0.24, z]}
-            size={[0.7, 0.48, 0.65]}
-            color="#c4a373"
-          />
-          <Box
-            position={[x, 0.485, z]}
-            size={[0.12, 0.01, 0.66]}
-            color="#e6cca0"
-          />
-        </group>
-      ))}
+      <OfficeUtilityRoom />
       {[0, 0.035, 0.07, 0.105].map((y) => (
         <Box
           key={y}

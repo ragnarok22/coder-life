@@ -3,6 +3,8 @@ import { BALANCE } from "./balance";
 import { withPersonality } from "./personalities";
 import { extraInterruptions, polishEvents } from "./polish-content";
 import { codingDecisions } from "./coding-decisions";
+import { importantAppearances, OUTFIT_PALETTES } from "./appearances";
+import { officeNpcHomes } from "./office-layout";
 
 export const DAY = {
   id: 1,
@@ -151,7 +153,102 @@ export const npcs: NpcDefinition[] = [
     interactions: ["architecture", "senior-review"],
     schedule,
   },
-].map((npc) => withPersonality(npc as NpcDefinition));
+  {
+    id: "rockstar-developer",
+    name: "Jules",
+    role: "Rockstar Developer",
+    color: "#333e4c",
+    skin: "#e3b794",
+    hair: "#66516f",
+    position: [-10, -0.1],
+    desk: [-10, -0.1],
+    interactions: [],
+    schedule: [
+      { at: 480, goal: "desk" },
+      { at: 670, goal: "coffee" },
+      { at: 700, goal: "desk" },
+      { at: 810, goal: "wander" },
+      { at: 850, goal: "desk" },
+    ],
+    ambient: true,
+  },
+  {
+    id: "corporate-visionary",
+    name: "Sterling",
+    role: "Corporate Visionary",
+    color: "#498e8d",
+    skin: "#bd8c67",
+    hair: "#2e373b",
+    position: [11.6, -3.3],
+    desk: [11.6, -3.3],
+    interactions: [],
+    schedule: [
+      { at: 480, goal: "desk" },
+      { at: 570, goal: "wander" },
+      { at: 600, goal: "meeting" },
+      { at: 780, goal: "coffee" },
+      { at: 830, goal: "meeting" },
+    ],
+    ambient: true,
+  },
+  {
+    id: "office-analyst",
+    name: "Alex",
+    role: "Analyst",
+    color: "#8c9eb3",
+    skin: "#ad7e5d",
+    hair: "#44362d",
+    position: [-4, -6.9],
+    desk: [-4, -6.9],
+    interactions: [],
+    schedule: [
+      { at: 480, goal: "wander" },
+      { at: 550, goal: "desk" },
+      { at: 700, goal: "coffee" },
+      { at: 770, goal: "wander" },
+      { at: 850, goal: "desk" },
+    ],
+    ambient: true,
+  },
+].map((definition) => {
+  const npc = withPersonality(definition as NpcDefinition),
+    home = officeNpcHomes[npc.id],
+    appearance = importantAppearances[npc.id];
+  return {
+    ...npc,
+    ...(home
+      ? {
+          position: home.position,
+          desk: home.position,
+          workHeading: home.heading,
+          seated: home.seated,
+        }
+      : {}),
+    appearance,
+    ...(appearance
+      ? {
+          color:
+            appearance.outfit === "blazer"
+              ? OUTFIT_PALETTES[appearance.palette].jacket
+              : (appearance.shirtColor ??
+                OUTFIT_PALETTES[appearance.palette].shirt),
+        }
+      : {}),
+    personality: npc.personality ?? {
+      description:
+        npc.id === "rockstar-developer"
+          ? "Ten times the monitors. At least twice the confidence."
+          : npc.id === "corporate-visionary"
+            ? "Aligning AI-powered synergy since before the first coffee."
+            : "Busy looking like everything is under control.",
+      frequency: 0.5,
+      persistence: 0.7,
+      speed: 0.95,
+      bathroomRespect: 1,
+      hostility: 0.1,
+    },
+  };
+});
 const baseInterruptions: Interruption[] = [
   {
     id: "commute",

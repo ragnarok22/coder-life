@@ -1,3 +1,4 @@
+import type { NpcAppearance } from "../data/appearances";
 export type Vec2 = [number, number];
 export type Location = "home" | "commute" | "office";
 export type Screen = "menu" | "playing" | "paused" | "results";
@@ -14,6 +15,12 @@ export type NpcState =
   | "waitingForPlayer"
   | "gaveUp"
   | "usingObject";
+export interface AnimationSample {
+  animation: AnimationState;
+  speed: number;
+  active?: boolean;
+  gesture?: "coffee" | "chat" | null;
+}
 export interface Effects {
   minutes?: number;
   stress?: number;
@@ -147,6 +154,10 @@ export interface NpcDefinition {
   position: Vec2;
   desk: Vec2;
   interactions: string[];
+  appearance?: NpcAppearance;
+  workHeading?: number;
+  seated?: boolean;
+  ambient?: boolean;
   personality?: {
     description: string;
     persistence: number;

@@ -36,7 +36,11 @@ export function StaticMesh({ children }: { children: ReactNode }) {
         material.emissiveIntensity === 1 &&
         material.emissive.getHex() === 0
       ) {
-        const geometry = object.geometry.clone().applyMatrix4(transform);
+        const geometry = (
+          object.geometry.index
+            ? object.geometry.toNonIndexed()
+            : object.geometry.clone()
+        ).applyMatrix4(transform);
         const colors = new Float32Array(geometry.attributes.position.count * 3);
         for (let i = 0; i < colors.length; i += 3) {
           colors[i] = material.color.r;
