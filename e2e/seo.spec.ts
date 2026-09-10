@@ -7,7 +7,10 @@ test("production HTML is readable without JavaScript and includes complete SEO m
   request,
   baseURL,
 }) => {
-  const context = await browser.newContext({ javaScriptEnabled: false, baseURL });
+  const context = await browser.newContext({
+    javaScriptEnabled: false,
+    baseURL,
+  });
   const page = await context.newPage();
   await page.goto("/");
   await expect(
