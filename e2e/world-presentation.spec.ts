@@ -147,7 +147,17 @@ test("movement accelerates, runs, turns, slides, uses steps and supports mouse l
   await page.keyboard.down("Shift");
   await page.waitForTimeout(450);
   const running = await snapshot(page);
-  expect(running.speed).toBeGreaterThan(walking.speed);
+  // Compare actual distance over equal windows; a single contact-resolution tick
+  // can have zero displacement even while the controller is running smoothly.
+  const walkingDistance = Math.hypot(
+    walking.player[0] - start.player[0],
+    walking.player[1] - start.player[1],
+  );
+  const runningDistance = Math.hypot(
+    running.player[0] - walking.player[0],
+    running.player[1] - walking.player[1],
+  );
+  expect(runningDistance).toBeGreaterThan(walkingDistance * 1.15);
   await page.mouse.move(700, 450);
   await page.mouse.down();
   await page.mouse.move(940, 470, { steps: 12 });

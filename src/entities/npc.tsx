@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useMemo } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
 import { CapsuleCollider, RigidBody } from "@react-three/rapier";
@@ -31,10 +31,12 @@ export function Npc({
     createBrain(npc, useGame.getState().game.seed),
   );
   const elapsed = useRef(0);
-  const pose = useMemo<AnimationSample>(
-    () => ({ animation: "idle", speed: 0, active: true, gesture: null }),
-    [],
-  );
+  const poseRef = useRef<AnimationSample>({
+    animation: "idle",
+    speed: 0,
+    active: true,
+    gesture: null,
+  });
   const seeking = useGame(
     (s) => getEncounter(s.game.search?.id ?? null)?.npc === npc.id,
   );
@@ -45,7 +47,8 @@ export function Npc({
     };
   }, [npc.id, brain]);
   useFrame((_, delta) => {
-    const state = useGame.getState();
+    const state = useGame.getState(),
+      pose = poseRef.current;
     pose.active =
       state.screen === "playing" &&
       !(import.meta.env.DEV && sceneDebug.freezeNpcs);
@@ -136,7 +139,7 @@ export function Npc({
           hair={npc.hair}
           glasses={npc.id === "accountant" || npc.id === "senior"}
           appearance={appearance ?? npc.appearance}
-          sample={() => pose}
+          sample={() => poseRef.current}
         />
         {seeking && (
           <Html position={[0, 2.35, 0]} center zIndexRange={[8, 0]}>

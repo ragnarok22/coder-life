@@ -36,8 +36,7 @@ export default function GlbCharacter({
     }
     const action = actions[name];
     if (action) {
-      action.paused = state?.active === false;
-      action.timeScale =
+      const timeScale =
         requested === "walk" || requested === "run"
           ? Math.max(
               0.2,
@@ -50,6 +49,7 @@ export default function GlbCharacter({
               ),
             )
           : 1;
+      action.setEffectiveTimeScale(state?.active === false ? 0 : timeScale);
     }
   });
   useEffect(

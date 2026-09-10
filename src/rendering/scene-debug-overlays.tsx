@@ -1,6 +1,7 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { BufferAttribute, BufferGeometry, Color } from "three";
+import type { LineSegments } from "three";
 import { Instances, Instance } from "@react-three/drei";
 import { useSceneDebug } from "../game/scene-debug";
 import { runtime } from "../game/runtime";
@@ -14,6 +15,7 @@ import { generateAppearance } from "../data/appearances";
 import { Npc } from "../entities/npc";
 
 function CameraRays() {
+  const lines = useRef<LineSegments>(null);
   const geometry = useMemo(() => {
     const g = new BufferGeometry();
     g.setAttribute("position", new BufferAttribute(new Float32Array(12), 3));
@@ -27,7 +29,8 @@ function CameraRays() {
   }, []);
   useEffect(() => () => geometry.dispose(), [geometry]);
   useFrame(() => {
-    const a = geometry.attributes.position as BufferAttribute;
+    if (!lines.current) return;
+    const a = lines.current.geometry.attributes.position as BufferAttribute;
     a.array.set(runtime.camera.target, 0);
     a.array.set(runtime.camera.desired, 3);
     a.array.set(runtime.camera.target, 6);
@@ -35,7 +38,12 @@ function CameraRays() {
     a.needsUpdate = true;
   });
   return (
-    <lineSegments geometry={geometry} frustumCulled={false} renderOrder={50}>
+    <lineSegments
+      ref={lines}
+      geometry={geometry}
+      frustumCulled={false}
+      renderOrder={50}
+    >
       <lineBasicMaterial vertexColors depthTest={false} />
     </lineSegments>
   );

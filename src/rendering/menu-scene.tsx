@@ -13,6 +13,7 @@ import {
   WindowPanel,
 } from "./props";
 import { Character } from "../entities/character";
+import { importantAppearances } from "../data/appearances";
 import { useGame } from "../game/store";
 
 function Diorama() {
@@ -78,10 +79,13 @@ function Diorama() {
         <Character glasses animation="typing" />
       </group>
       <group position={[-3.7, 0.18, -0.95]} rotation={[0, Math.PI, 0]}>
-        <Character color="#c5899a" hair="#774633" animation="typing" />
+        <Character appearance={importantAppearances.hr} animation="typing" />
       </group>
       <group position={[0.2, 0.18, -0.95]} rotation={[0, Math.PI, 0]}>
-        <Character color="#d9b35d" skin="#b98261" animation="typing" />
+        <Character
+          appearance={importantAppearances.accountant}
+          animation="typing"
+        />
       </group>
       <CoffeeStation position={[4.18, 0.1, -2.95]} />
       <Printer position={[-4.95, 0.1, 1.4]} />
@@ -90,7 +94,7 @@ function Diorama() {
       <Plant position={[5, 0.1, 3.6]} scale={1.2} />
       <Plant position={[1.5, 1.22, -2.4]} scale={0.4} />
       <group position={[3.6, 0.1, 0.85]} rotation={[0, -0.45, 0]}>
-        <Character color="#c7895e" hair="#684333" />
+        <Character appearance={importantAppearances.manager} />
         <Box
           position={[0.64, 0.85, 0.1]}
           size={[0.38, 0.53, 0.07]}
@@ -98,7 +102,7 @@ function Diorama() {
         />
       </group>
       <group position={[2.65, 0.1, 3.15]} rotation={[0, -1.7, 0]}>
-        <Character color="#8494ad" skin="#ac7656" />
+        <Character appearance={importantAppearances.sales} />
         <Mug position={[0.4, 0.8, 0.25]} />
       </group>
       <Box

@@ -7,6 +7,10 @@ export const runtime = {
   animation: "idle" as AnimationState,
   speed: 0,
   playerHeight: 0.8,
+  movementContacts: [] as {
+    position: { x: number; y: number; z: number };
+    normal: { x: number; y: number; z: number };
+  }[],
   camera: {
     blocked: false,
     drawCalls: 0,

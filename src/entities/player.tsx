@@ -1,4 +1,4 @@
-import { useEffect, useRef, useMemo } from "react";
+import { useEffect, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import {
   CapsuleCollider,
@@ -25,7 +25,9 @@ import {
   stepLocomotion,
   turnToward,
 } from "../game/locomotion";
+import type { Locomotion } from "../game/locomotion";
 import { PlayerCamera } from "../rendering/player-camera";
+import { sceneDebug } from "../game/scene-debug";
 
 export function Player() {
   const body = useRef<RapierRigidBody>(null),
@@ -35,7 +37,7 @@ export function Player() {
     typeof world.createCharacterController
   > | null>(null);
   const spawn = useGame((s) => s.game.position),
-    motion = useMemo(createLocomotion, []),
+    motionRef = useRef<Locomotion | null>(null),
     timer = useRef(0);
   useEffect(() => {
     const c = world.createCharacterController(M.colliderOffset);
@@ -58,6 +60,7 @@ export function Player() {
       c = controller.current;
     if (!b || !c) return;
     const state = useGame.getState(),
+      motion = (motionRef.current ??= createLocomotion()),
       p = b.translation(),
       dt = world.timestep;
     const allowed =
@@ -106,6 +109,18 @@ export function Player() {
     runtime.player[1] = p.z;
     runtime.playerHeight = p.y;
     runtime.speed = Math.hypot(movement.x, movement.z) / dt;
+    if (import.meta.env.DEV && sceneDebug.colliders) {
+      runtime.movementContacts.length = 0;
+      if (runtime.speed < 0.1 && Math.hypot(motion.x, motion.z) > 1)
+        for (let i = 0; i < c.numComputedCollisions(); i++) {
+          const contact = c.computedCollision(i);
+          if (contact?.collider)
+            runtime.movementContacts.push({
+              position: contact.collider.translation(),
+              normal: contact.normal1,
+            });
+        }
+    }
     runtime.animation = state.game.working
       ? "typing"
       : state.game.dialogue
@@ -136,6 +151,7 @@ export function Player() {
     const b = body.current;
     if (!b) return;
     const state = useGame.getState(),
+      motion = (motionRef.current ??= createLocomotion()),
       p = b.translation();
     if (state.screen !== "playing" || state.game.dialogue) {
       motion.x = 0;

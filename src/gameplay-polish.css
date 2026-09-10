@@ -1,3 +1,30 @@
+.world-dev-controls {
+  border-top: 1px solid #ccd5b9;
+  margin-top: 16px;
+  padding-top: 14px;
+}
+.world-dev-controls h4 {
+  font: 9px var(--mono);
+  letter-spacing: 1px;
+  color: #9b8054;
+}
+.world-dev-controls button {
+  display: block;
+  width: 100%;
+  margin: 7px 0;
+  padding: 9px;
+  background: #e1e7d4;
+  border: 1px solid #c8d5b6;
+  border-radius: 4px;
+  font: 9px var(--mono);
+}
+.world-dev-controls button:disabled {
+  opacity: 0.5;
+}
+.world-dev-controls input[type="checkbox"] {
+  flex: 0;
+  accent-color: #6c8b57;
+}
 .code-health {
   display: flex;
   justify-content: space-between;

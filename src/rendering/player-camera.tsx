@@ -1,10 +1,11 @@
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import type { RefObject } from "react";
 import { useFrame } from "@react-three/fiber";
 import { useRapier } from "@react-three/rapier";
 import { Vector3 } from "three";
 import type { Group } from "three";
 import { createCameraRig, updateCameraRig } from "./camera-rig";
+import type { CameraRig } from "./camera-rig";
 import { THIRD_PERSON_CAMERA as C } from "../data/presentation";
 import { input } from "../game/input";
 import { runtime } from "../game/runtime";
@@ -13,8 +14,8 @@ import { sceneDebug } from "../game/scene-debug";
 
 export function PlayerCamera({ target }: { target: RefObject<Group | null> }) {
   const { world, rapier } = useRapier();
-  const rig = useMemo(createCameraRig, []),
-    look = useMemo(() => new Vector3(), []);
+  const rigRef = useRef<CameraRig | null>(null),
+    lookRef = useRef<Vector3 | null>(null);
   const queries = useMemo(() => {
     const shape = new rapier.Ball(C.collisionRadius),
       rotation = { x: 0, y: 0, z: 0, w: 1 };
@@ -49,6 +50,8 @@ export function PlayerCamera({ target }: { target: RefObject<Group | null> }) {
       camera.lookAt(0, 0, 0);
       return;
     }
+    const rig = (rigRef.current ??= createCameraRig()),
+      look = (lookRef.current ??= new Vector3());
     // Read the interpolated render transform, not a staircase of fixed physics positions.
     target.current.getWorldPosition(look);
     look.y += C.lookHeight;
