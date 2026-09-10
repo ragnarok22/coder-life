@@ -1,7 +1,6 @@
-import { useEffect, useMemo, useRef } from "react";
-import { useFrame } from "@react-three/fiber";
+import { useEffect, useMemo } from "react";
 import { BufferAttribute, BufferGeometry, Color } from "three";
-import type { LineSegments } from "three";
+import type { LineBasicMaterial } from "three";
 import { Instances, Instance } from "@react-three/drei";
 import { useSceneDebug } from "../game/scene-debug";
 import { runtime } from "../game/runtime";
@@ -14,11 +13,33 @@ import { OFFICE_PRESENTATION } from "../data/presentation";
 import { generateAppearance } from "../data/appearances";
 import { Npc } from "../entities/npc";
 
+function compileCameraRays(
+  shader: Parameters<LineBasicMaterial["onBeforeCompile"]>[0],
+) {
+  // Uniforms read the live camera arrays; vertices hold static endpoint selectors.
+  shader.uniforms.cameraTarget = { value: runtime.camera.target };
+  shader.uniforms.cameraDesired = { value: runtime.camera.desired };
+  shader.uniforms.cameraPosition = { value: runtime.camera.position };
+  shader.vertexShader = `
+uniform vec3 cameraTarget;
+uniform vec3 cameraDesired;
+uniform vec3 cameraPosition;
+${shader.vertexShader}`.replace(
+    "#include <begin_vertex>",
+    "vec3 transformed = mix(cameraTarget, mix(cameraDesired, cameraPosition, position.y), position.x);",
+  );
+}
+
 function CameraRays() {
-  const lines = useRef<LineSegments>(null);
   const geometry = useMemo(() => {
     const g = new BufferGeometry();
-    g.setAttribute("position", new BufferAttribute(new Float32Array(12), 3));
+    g.setAttribute(
+      "position",
+      new BufferAttribute(
+        new Float32Array([0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0]),
+        3,
+      ),
+    );
     const color = new Float32Array(12);
     new Color("#df9b56").toArray(color, 0);
     new Color("#df9b56").toArray(color, 3);
@@ -28,23 +49,13 @@ function CameraRays() {
     return g;
   }, []);
   useEffect(() => () => geometry.dispose(), [geometry]);
-  useFrame(() => {
-    if (!lines.current) return;
-    const a = lines.current.geometry.attributes.position as BufferAttribute;
-    a.array.set(runtime.camera.target, 0);
-    a.array.set(runtime.camera.desired, 3);
-    a.array.set(runtime.camera.target, 6);
-    a.array.set(runtime.camera.position, 9);
-    a.needsUpdate = true;
-  });
   return (
-    <lineSegments
-      ref={lines}
-      geometry={geometry}
-      frustumCulled={false}
-      renderOrder={50}
-    >
-      <lineBasicMaterial vertexColors depthTest={false} />
+    <lineSegments geometry={geometry} frustumCulled={false} renderOrder={50}>
+      <lineBasicMaterial
+        vertexColors
+        depthTest={false}
+        onBeforeCompile={compileCameraRays}
+      />
     </lineSegments>
   );
 }
