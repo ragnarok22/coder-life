@@ -15,6 +15,8 @@ export default defineConfig({
         "src/game/save-migration.ts",
         "src/game/profile.ts",
         "src/game/locomotion.ts",
+        "src/game/player-presentation.ts",
+        "src/data/pose-anchors.ts",
         "src/rendering/camera-rig.ts",
         "src/data/appearances.ts",
       ],
