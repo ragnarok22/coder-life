@@ -22,7 +22,7 @@ Deploy the contents of `dist/` to any static host. Relative asset paths support 
 
 ### Search engines and link previews
 
-Set `SITE_URL` to the full public homepage URL before building. Include the path if the game is hosted in a subdirectory. You can copy `.env.example` to `.env.production.local`, or set the environment variable in your hosting provider's build settings.
+Set `SITE_URL` to the public homepage URL before building. Bare domains such as `coder-life.ragnarok22.dev` default to HTTPS; explicit `http://` or `https://` URLs keep their protocol. Include the path if the game is hosted in a subdirectory. You can copy `.env.example` to `.env.production.local`, or set the environment variable in your hosting provider's build settings.
 
 ```sh
 SITE_URL=https://your-domain.com/coder-life/ pnpm build

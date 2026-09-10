@@ -3,7 +3,12 @@ import { site } from "../src/data/site.ts";
 
 export function normalizeSiteUrl(value?: string): string | undefined {
   if (!value?.trim()) return undefined;
-  const url = new URL(value.trim());
+  const input = value.trim();
+  const isBareDomain =
+    /^[a-z\d](?:[a-z\d-]*[a-z\d])?(?:\.[a-z\d](?:[a-z\d-]*[a-z\d])?)+(?::\d+)?(?:[/?#]|$)/i.test(
+      input,
+    );
+  const url = new URL(isBareDomain ? `https://${input}` : input);
   if (
     !["https:", "http:"].includes(url.protocol) ||
     url.username ||

@@ -2,9 +2,21 @@ import { describe, expect, it } from "vitest";
 import { crawlFiles, normalizeSiteUrl, seoTags } from "../scripts/seo";
 
 describe("deployment SEO", () => {
-  it("keeps canonical, social images, and crawl files on the same subdirectory URL", () => {
-    const url = "https://example.com/games/coder-life";
-    const tags = seoTags(url);
+  it.each([
+    [
+      "https://example.com/games/coder-life",
+      "https://example.com/games/coder-life",
+    ],
+    ["coder-life.ragnarok22.dev", "https://coder-life.ragnarok22.dev"],
+    ["http://example.com/game", "http://example.com/game"],
+    ["example.com:8443/game", "https://example.com:8443/game"],
+    [
+      " coder-life.ragnarok22.dev/games/coder-life/// ",
+      "https://coder-life.ragnarok22.dev/games/coder-life",
+    ],
+  ])("keeps all SEO URLs consistent for SITE_URL=%s", (input, url) => {
+    expect(normalizeSiteUrl(input)).toBe(`${url}/`);
+    const tags = seoTags(input);
     expect(
       tags.find((tag) => tag.attrs?.rel === "canonical")?.attrs?.href,
     ).toBe(`${url}/`);
@@ -26,7 +38,7 @@ describe("deployment SEO", () => {
       image: `${url}/social-preview.png`,
       isAccessibleForFree: true,
     });
-    const files = crawlFiles(url);
+    const files = crawlFiles(input);
     expect(files["robots.txt"]).toContain(`Sitemap: ${url}/sitemap.xml`);
     expect(files["sitemap.xml"]).toContain(`<loc>${url}/</loc>`);
   });
@@ -41,10 +53,16 @@ describe("deployment SEO", () => {
 
   it.each([
     "not-a-url",
+    "-example.com",
+    "example..com",
+    "mailto:user@example.com",
     "ftp://example.com/",
     "https://user:secret@example.com/",
     "https://example.com/?preview=1",
     "https://example.com/#game",
+    "user:secret@example.com/",
+    "example.com/?preview=1",
+    "example.com/#game",
   ])("rejects an invalid canonical URL: %s", (url) => {
     expect(() => normalizeSiteUrl(url)).toThrow();
   });
