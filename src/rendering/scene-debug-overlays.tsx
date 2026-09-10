@@ -17,16 +17,16 @@ function compileCameraRays(
   shader: Parameters<LineBasicMaterial["onBeforeCompile"]>[0],
 ) {
   // Uniforms read the live camera arrays; vertices hold static endpoint selectors.
-  shader.uniforms.cameraTarget = { value: runtime.camera.target };
-  shader.uniforms.cameraDesired = { value: runtime.camera.desired };
-  shader.uniforms.cameraPosition = { value: runtime.camera.position };
+  shader.uniforms.cameraRayTarget = { value: runtime.camera.target };
+  shader.uniforms.cameraRayDesired = { value: runtime.camera.desired };
+  shader.uniforms.cameraRayPosition = { value: runtime.camera.position };
   shader.vertexShader = `
-uniform vec3 cameraTarget;
-uniform vec3 cameraDesired;
-uniform vec3 cameraPosition;
+uniform vec3 cameraRayTarget;
+uniform vec3 cameraRayDesired;
+uniform vec3 cameraRayPosition;
 ${shader.vertexShader}`.replace(
     "#include <begin_vertex>",
-    "vec3 transformed = mix(cameraTarget, mix(cameraDesired, cameraPosition, position.y), position.x);",
+    "vec3 transformed = mix(cameraRayTarget, mix(cameraRayDesired, cameraRayPosition, position.y), position.x);",
   );
 }
 
