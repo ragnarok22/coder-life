@@ -18,6 +18,7 @@ Everyone is welcome to help improve the game, whether through bug reports, gamep
 
 - **[Contributing guide](CONTRIBUTING.md):** Set up your environment, follow the development conventions, run the relevant checks, and submit a pull request.
 - **[Code of Conduct](CODE_OF_CONDUCT.md):** Read our community standards and learn how to report concerns privately. We follow Contributor Covenant 2.1.
+- **[Security policy](SECURITY.md):** Check supported versions and report suspected vulnerabilities privately.
 - **[Issues](https://github.com/ragnarok22/coder-life/issues):** Report a bug, suggest an improvement, or find something to work on.
 
 ## Milestone: Day 1 Gameplay Polish

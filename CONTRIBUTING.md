@@ -14,6 +14,8 @@ Only Day 1 is currently playable. The [README](README.md) describes the game, it
 
 ### Report a bug
 
+For suspected security vulnerabilities, follow the [Security Policy](SECURITY.md) and report privately before sharing details in an issue or pull request.
+
 Open an [issue](https://github.com/ragnarok22/coder-life/issues/new) with:
 
 - A short description of the problem and what you expected instead.
