@@ -104,7 +104,7 @@ function Dialogue() {
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const element = dialog.current;
-    if (screen === 'playing') element?.showModal();
+    if (screen === "playing") element?.showModal();
     else element?.close();
     return () => element?.close();
   }, [screen, id]);
@@ -112,56 +112,59 @@ function Dialogue() {
   if (!interruption) return null;
   const npc = npcs.find((n) => n.id === interruption.npc);
   return (
-      <dialog
-        ref={dialog}
-        className="dialogue-card dialogue-native"
-        aria-label={interruption.name}
-        onCancel={event => { event.preventDefault(); useGame.getState().pause(); }}
-      >
-        <div className="dialogue-top">
-          <div
-            className="npc-avatar"
-            style={{ background: npc?.color ?? "#d4a566" }}
-          >
-            {npc?.name[0] ?? "N"}
-            <span>!</span>
-          </div>
-          <div>
-            <span className="eyebrow">
-              {interruption.category === "meeting"
-                ? "THIS COULD HAVE BEEN AN EMAIL"
-                : "AN UNSCHEDULED SIDE QUEST"}
-            </span>
-            <h3>
-              {npc?.name ?? "Your neighbor"}{" "}
-              <span>· {npc?.role ?? "Also not your job"}</span>
-            </h3>
-          </div>
-          <span className="dialogue-pause">
-            <Pause size={12} /> CLOCK PAUSED
+    <dialog
+      ref={dialog}
+      className="dialogue-card dialogue-native"
+      aria-label={interruption.name}
+      onCancel={(event) => {
+        event.preventDefault();
+        useGame.getState().pause();
+      }}
+    >
+      <div className="dialogue-top">
+        <div
+          className="npc-avatar"
+          style={{ background: npc?.color ?? "#d4a566" }}
+        >
+          {npc?.name[0] ?? "N"}
+          <span>!</span>
+        </div>
+        <div>
+          <span className="eyebrow">
+            {interruption.category === "meeting"
+              ? "THIS COULD HAVE BEEN AN EMAIL"
+              : "AN UNSCHEDULED SIDE QUEST"}
           </span>
+          <h3>
+            {npc?.name ?? "Your neighbor"}{" "}
+            <span>· {npc?.role ?? "Also not your job"}</span>
+          </h3>
         </div>
-        <p className="dialogue-quote">“{interruption.dialogue}”</p>
-        <div className="dialogue-options">
-          {interruption.choices.map((choice, index) => (
-            <button
-              key={choice.label}
-              autoFocus={index === 0}
-              onClick={() => useGame.getState().choose(index)}
-            >
-              <span className="choice-number">0{index + 1}</span>
-              <span>
-                <strong>{choice.label}</strong>
-                <small>{choice.hint}</small>
-              </span>
-              <ArrowUpRight size={18} />
-            </button>
-          ))}
-        </div>
-        <div className="dialogue-footnote">
-          Your choices matter. Mostly to your calendar.
-        </div>
-      </dialog>
+        <span className="dialogue-pause">
+          <Pause size={12} /> CLOCK PAUSED
+        </span>
+      </div>
+      <p className="dialogue-quote">“{interruption.dialogue}”</p>
+      <div className="dialogue-options">
+        {interruption.choices.map((choice, index) => (
+          <button
+            key={choice.label}
+            autoFocus={index === 0}
+            onClick={() => useGame.getState().choose(index)}
+          >
+            <span className="choice-number">0{index + 1}</span>
+            <span>
+              <strong>{choice.label}</strong>
+              <small>{choice.hint}</small>
+            </span>
+            <ArrowUpRight size={18} />
+          </button>
+        ))}
+      </div>
+      <div className="dialogue-footnote">
+        Your choices matter. Mostly to your calendar.
+      </div>
+    </dialog>
   );
 }
 function TouchControls() {

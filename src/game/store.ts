@@ -1,8 +1,5 @@
 import { create } from "zustand";
-import {
-  GAME_MINUTES_PER_SECOND,
-  interruptions,
-} from "../data/content";
+import { GAME_MINUTES_PER_SECOND, interruptions } from "../data/content";
 import { objects } from "../data/world";
 import { selectInterruption, selectWorldEvent } from "../events/event-director";
 import {
@@ -27,7 +24,9 @@ const defaultPrefs: Preferences = {
 function readPreferences(): Preferences {
   try {
     const p = JSON.parse(
-      localStorage.getItem("coder-life:preferences:v1") ?? localStorage.getItem("coder-life:preferences") ?? "{}",
+      localStorage.getItem("coder-life:preferences:v1") ??
+        localStorage.getItem("coder-life:preferences") ??
+        "{}",
     );
     const result = { ...defaultPrefs };
     for (const k of ["master", "music", "effects", "sensitivity"] as const)
@@ -201,18 +200,18 @@ export const useGame = create<Store>((set, get) => ({
         }
         const event = selectWorldEvent(game);
         if (event) {
-            game = applyEffects(game, event.effects);
-            game = {
-              ...game,
-              cooldowns: {
-                ...game.cooldowns,
-                [event.id]: game.minutes + event.cooldown,
-                ...(event.id === "coffee-broken"
-                  ? { coffee: game.minutes + 10 }
-                  : {}),
-              },
-            };
-            get().notify(event.title, event.message);
+          game = applyEffects(game, event.effects);
+          game = {
+            ...game,
+            cooldowns: {
+              ...game.cooldowns,
+              [event.id]: game.minutes + event.cooldown,
+              ...(event.id === "coffee-broken"
+                ? { coffee: game.minutes + 10 }
+                : {}),
+            },
+          };
+          get().notify(event.title, event.message);
         }
       }
     }

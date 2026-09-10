@@ -107,7 +107,7 @@ export function Settings({ onClose }: { onClose: () => void }) {
               className="danger-button"
               onClick={async () => {
                 await useGame.getState().reset();
-                if (useGame.getState().saveStatus !== 'error') onClose();
+                if (useGame.getState().saveStatus !== "error") onClose();
               }}
             >
               Delete progress

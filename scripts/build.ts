@@ -11,15 +11,23 @@ const server = await createServer({
   appType: "custom",
 });
 try {
-  const { render }: { render: () => string } = await server.ssrLoadModule(
-    "/src/prerender.ts",
+  const { render } = await server.ssrLoadModule("/src/prerender.ts");
+  if (typeof render !== "function") {
+    throw new Error("The prerender entry must export a render function");
+  }
+  const file = resolve(
+    server.config.root,
+    server.config.build.outDir,
+    "index.html",
   );
-  const file = resolve(server.config.root, server.config.build.outDir, "index.html");
   const template = await readFile(file, "utf8");
   if (!template.includes("<!--app-html-->")) {
     throw new Error("Missing prerender outlet in index.html");
   }
-  await writeFile(file, template.replace("<!--app-html-->", () => render()));
+  await writeFile(
+    file,
+    template.replace("<!--app-html-->", () => render()),
+  );
   console.info("Prerendered the Coder-Life landing page.");
 } finally {
   await server.close();

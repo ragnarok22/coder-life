@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#f5f3eb"/>
+  <path d="M60 110H1140M60 550H1140" stroke="#dedfd2" stroke-width="2"/>
+  <rect x="60" y="46" width="42" height="38" rx="7" fill="#ce784c"/>
+  <path d="m71 57 8 8-8 8m13 0h9" fill="none" stroke="#fff6e6" stroke-width="3"/>
+  <g font-family="monospace" fill="#303d34">
+    <text x="118" y="74" font-size="24">coder-life.</text>
+    <text x="1140" y="72" text-anchor="end" font-size="15" fill="#426b50">NO CLOUD. JUST COFFEE.</text>
+    <text x="60" y="168" font-size="16" fill="#426b50" letter-spacing="2">A WORK-LIFE IMBALANCE SIMULATOR</text>
+    <text x="52" y="281" font-size="110" font-weight="bold" letter-spacing="-7">CODER-</text>
+    <text x="52" y="385" font-size="110" font-weight="bold" letter-spacing="-7">LIFE<tspan fill="#ce784c">_</tspan></text>
+    <text x="60" y="445" font-size="27">Write code. Drink coffee.</text>
+    <text x="60" y="487" font-size="27">Survive “a quick question.”</text>
+    <text x="60" y="590" font-size="17" fill="#426b50">FREE 3D BROWSER GAME</text>
+    <text x="1140" y="590" text-anchor="end" font-size="17">NO DOWNLOAD. NO ACCOUNT.</text>
+  </g>
+  <g transform="translate(777 177) rotate(5 162 160)">
+    <rect x="9" y="12" width="322" height="322" rx="4" fill="#dedbc6"/>
+    <rect width="322" height="322" rx="4" fill="#ebe4bf"/>
+    <circle cx="161" cy="18" r="7" fill="#ce784c"/>
+    <text x="161" y="64" text-anchor="middle" font-family="monospace" font-size="15" fill="#426b50">TODAY’S VERY SIMPLE PLAN</text>
+    <path d="M123 107c-14-15 14-22 0-37m31 37c-14-15 14-22 0-37" fill="none" stroke="#a3ad90" stroke-width="5" stroke-linecap="round"/>
+    <path d="M103 120h88v43c0 29-88 29-88 0zm88 5h14c28 0 28 38 0 38h-14" fill="none" stroke="#426b50" stroke-width="7" stroke-linejoin="round"/>
+    <path d="M88 194h127" stroke="#426b50" stroke-width="6" stroke-linecap="round"/>
+    <text x="161" y="242" text-anchor="middle" font-family="monospace" font-weight="bold" font-size="26" fill="#303d34">Just do your job.</text>
+    <text x="161" y="281" text-anchor="middle" font-family="monospace" font-size="16" fill="#426b50">How hard could it be?</text>
+  </g>
+</svg>

@@ -9,6 +9,7 @@ export default defineConfig({
         "src/game/store.ts",
         "src/game/persistence.ts",
         "src/ai/navigation.ts",
+        "src/events/event-director.ts",
       ],
       reporter: ["text", "html"],
     },

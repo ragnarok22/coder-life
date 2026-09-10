@@ -11,7 +11,9 @@ export function normalizeSiteUrl(value?: string): string | undefined {
     url.search ||
     url.hash
   ) {
-    throw new Error("SITE_URL must be an HTTP(S) URL without credentials, query, or fragment.");
+    throw new Error(
+      "SITE_URL must be an HTTP(S) URL without credentials, query, or fragment.",
+    );
   }
   url.pathname = `${url.pathname.replace(/\/+$/, "")}/`;
   return url.href;
@@ -79,8 +81,12 @@ export function crawlFiles(siteUrl?: string): Record<string, string> {
     "robots.txt": `User-agent: *\nAllow: /\n${url ? `\nSitemap: ${new URL("sitemap.xml", url).href}\n` : ""}`,
   };
   if (url) {
-    const escaped = url.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    files["sitemap.xml"] = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>${escaped}</loc></url>\n</urlset>\n`;
+    const escaped = url
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+    files["sitemap.xml"] =
+      `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>${escaped}</loc></url>\n</urlset>\n`;
   }
   return files;
 }
@@ -94,7 +100,9 @@ export function seoPlugin(siteUrl?: string): Plugin {
     },
     generateBundle() {
       if (!url) {
-        this.warn("Set SITE_URL to the public homepage URL to generate canonical URLs, social image URLs, and sitemap.xml.");
+        this.warn(
+          "Set SITE_URL to the public homepage URL to generate canonical URLs, social image URLs, and sitemap.xml.",
+        );
       }
       for (const [fileName, source] of Object.entries(crawlFiles(url))) {
         this.emitFile({ type: "asset", fileName, source });

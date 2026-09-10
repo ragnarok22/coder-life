@@ -75,7 +75,10 @@ export function MainMenu() {
             CODER<span className="title-hyphen">-</span>
             <br />
             <span className="life-word">
-              LIFE<span className="title-cursor" aria-hidden="true">_</span>
+              LIFE
+              <span className="title-cursor" aria-hidden="true">
+                _
+              </span>
             </span>
           </h1>
           <p className="hero-tagline">

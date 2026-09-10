@@ -100,9 +100,14 @@ test("menu, controls and local save restore in an isolated browser", async ({
   await page.getByRole("button", { name: /Sit down & code/ }).click();
   // Step the actual rules at one-minute intervals to verify the remainder without a nine-minute test.
   await page.evaluate(async () => {
-    const path = performance.getEntriesByType('resource').map(entry => entry.name).filter(url => new URL(url).pathname === '/src/game/store.ts').at(-1)!;
+    const path = performance
+      .getEntriesByType("resource")
+      .map((entry) => entry.name)
+      .filter((url) => new URL(url).pathname === "/src/game/store.ts")
+      .at(-1)!;
     const { useGame } = await import(/* @vite-ignore */ path);
-    if (useGame.getState().screen !== 'playing') throw new Error('Test must advance the active game store');
+    if (useGame.getState().screen !== "playing")
+      throw new Error("Test must advance the active game store");
     for (
       let minute = 0;
       minute < 600 && !useGame.getState().game.finished;
