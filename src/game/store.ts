@@ -21,6 +21,10 @@ import { audio } from "./audio";
 import { runtime } from "./runtime";
 import { initialProfile, recordProgress } from "./profile";
 import type { CareerProfile, GameData, Preferences, Screen } from "./types";
+import { createMembershipIndex } from "./membership-index";
+
+const profileAchievementMembership = createMembershipIndex<string>();
+const runAchievementMembership = createMembershipIndex<string>();
 
 const defaultPrefs: Preferences = {
   master: 0.6,
@@ -214,10 +218,12 @@ export const useGame = create<Store>((set, get) => ({
     const result = resolveChoice(game, index);
     if (result.game === game) return;
     set(commit(result.game));
+    const profileAchievements = profileAchievementMembership(
+      get().profile.achievements,
+    );
+    const previousAchievements = runAchievementMembership(game.achievements);
     const unlocked = result.game.achievements.find(
-      (id) =>
-        !get().profile.achievements.includes(id) ||
-        !game.achievements.includes(id),
+      (id) => !profileAchievements.has(id) || !previousAchievements.has(id),
     );
     get().notify(
       result.title,

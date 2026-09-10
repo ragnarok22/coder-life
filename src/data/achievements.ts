@@ -1,4 +1,7 @@
 import type { GameData } from "../game/types";
+import { createMembershipIndex } from "../game/membership-index";
+
+const earnedMembership = createMembershipIndex<string>();
 export interface AchievementDefinition {
   id: string;
   title: string;
@@ -123,8 +126,9 @@ export const achievements: AchievementDefinition[] = [
   },
 ];
 export function unlockAchievements(g: GameData): GameData {
+  const earned = earnedMembership(g.achievements);
   const newly = achievements.reduce<string[]>((newly, a) => {
-    if (!g.achievements.includes(a.id) && a.test(g)) newly.push(a.id);
+    if (!earned.has(a.id) && a.test(g)) newly.push(a.id);
     return newly;
   }, []);
   return newly.length

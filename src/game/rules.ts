@@ -3,6 +3,10 @@ import { BALANCE, TIME_CATEGORIES } from "../data/balance";
 import { unlockAchievements } from "../data/achievements";
 import { evaluateEnding } from "../data/endings";
 import type { Conditions, Effects, GameData, TimeCategory } from "./types";
+import { createMembershipIndex } from "./membership-index";
+
+const conditionFlagMembership = createMembershipIndex<string>();
+const cancellationMembership = createMembershipIndex<string>();
 
 export const clamp = (n: number, min = 0, max = 100) =>
   Math.min(max, Math.max(min, n));
@@ -89,6 +93,7 @@ export const initialGame = (seed = 1): GameData => ({
   search: null,
 });
 export function matches(g: GameData, c: Conditions) {
+  const flags = c.flags ? conditionFlagMembership(g.flags) : undefined;
   return (
     (!c.location || g.location === c.location) &&
     g.minutes >= (c.after ?? 0) &&
@@ -98,7 +103,7 @@ export function matches(g: GameData, c: Conditions) {
     g.productivity <= (c.maxProgress ?? 100) &&
     (!c.flag || g.flags.includes(c.flag)) &&
     (!c.notFlag || !g.flags.includes(c.notFlag)) &&
-    (!c.flags || c.flags.every((f) => g.flags.includes(f))) &&
+    (!c.flags || c.flags.every((f) => flags!.has(f))) &&
     g.technicalDebt >= (c.minDebt ?? 0) &&
     g.technicalDebt <= (c.maxDebt ?? 100) &&
     g.codeQuality >= (c.minQuality ?? 0) &&
@@ -156,6 +161,15 @@ export function applyEffects(
   const cooldowns = { ...g.cooldowns };
   for (const [key, minutes] of Object.entries(e.cooldowns ?? {}))
     cooldowns[key] = g.minutes + elapsed + minutes;
+  const flags = new Set([
+    ...g.flags,
+    ...(e.flag ? [e.flag] : []),
+    ...(e.flags ?? []),
+  ]);
+  for (const flag of e.clearFlags ?? []) flags.delete(flag);
+  const cancelledFollowUps = e.cancelFollowUps
+    ? cancellationMembership(e.cancelFollowUps)
+    : undefined;
   return unlockAchievements(
     finish(
       rewardTasks({
@@ -183,16 +197,10 @@ export function applyEffects(
           BALANCE.earliestDeadline,
           DAY.end,
         ),
-        flags: [
-          ...new Set([
-            ...g.flags,
-            ...(e.flag ? [e.flag] : []),
-            ...(e.flags ?? []),
-          ]),
-        ].filter((f) => !e.clearFlags?.includes(f)),
+        flags: [...flags],
         cooldowns,
         pendingEvents: g.pendingEvents.filter(
-          (p) => !e.cancelFollowUps?.includes(p.eventId),
+          (p) => !cancelledFollowUps?.has(p.eventId),
         ),
         search:
           e.cancelSearch ||

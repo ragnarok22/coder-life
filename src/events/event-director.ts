@@ -6,6 +6,7 @@ import {
   randomEvents,
 } from "../data/content";
 import { BALANCE, pacingAt } from "../data/balance";
+import { createMembershipIndex } from "../game/membership-index";
 import { advance, applyEffects, matches } from "../game/rules";
 import { randomInt, randomStream } from "../game/random";
 import { unlockAchievements } from "../data/achievements";
@@ -124,6 +125,8 @@ export interface DayContext {
   activity?: TimeCategory;
   zone?: string;
 }
+const flagMembership = createMembershipIndex<string>();
+
 /** One director owns the dialogue/search slots. Bounded queue + grace periods prevent event storms. */
 export function tickDay(
   game: GameData,
@@ -144,10 +147,11 @@ export function tickDay(
     if (game.finished) break;
     if (game.search && game.minutes >= game.search.expiresAt)
       game = expireSearch(game, wasHiding ?? context.zone);
+    const flags = flagMembership(game.flags);
     if (
       game.location === "commute" &&
       context.position[1] < 2 &&
-      !game.flags.includes("commute")
+      !flags.has("commute")
     ) {
       game = openEncounter(
         { ...game, flags: [...game.flags, "commute"] },
@@ -156,7 +160,7 @@ export function tickDay(
       continue;
     }
     if (game.location !== "office") continue;
-    if (!game.flags.includes("printer-intro") && context.position[1] < 3.5) {
+    if (!flags.has("printer-intro") && context.position[1] < 3.5) {
       game = openEncounter(
         { ...game, flags: [...game.flags, "printer-intro"] },
         "printer",
@@ -165,7 +169,7 @@ export function tickDay(
     }
     if (
       game.stats.workMinutes >= BALANCE.firstManagerWork &&
-      !game.flags.includes("first-manager") &&
+      !flags.has("first-manager") &&
       !game.search
     ) {
       game = requestSearch(
@@ -173,7 +177,7 @@ export function tickDay(
         "minute",
       );
     }
-    if (game.minutes >= 780 && !game.flags.includes("lunch"))
+    if (game.minutes >= 780 && !flags.has("lunch"))
       game = remember(
         { ...game, flags: [...game.flags, "lunch"] },
         "lunch-hint",
@@ -182,7 +186,7 @@ export function tickDay(
     if (
       game.minutes >= game.deadline &&
       game.productivity < 100 &&
-      !game.flags.includes("missed-delivery")
+      !flags.has("missed-delivery")
     ) {
       game = applyEffects(game, {
         stress: 5,

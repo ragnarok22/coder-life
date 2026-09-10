@@ -6,10 +6,19 @@ import { npcs } from "../data/content";
 import { BALANCE } from "../data/balance";
 import { clock } from "../game/rules";
 import { Modal } from "./modal";
+import { useMemo } from "react";
 
 export function Journal({ onClose }: { onClose: () => void }) {
   const game = useGame((s) => s.game),
     profile = useGame((s) => s.profile);
+  const unlockedAchievements = useMemo(
+    () => new Set(profile.achievements),
+    [profile.achievements],
+  );
+  const discoveredEndings = useMemo(
+    () => new Set(profile.endings),
+    [profile.endings],
+  );
   return (
     <Modal
       title="The Monday dossier."
@@ -75,7 +84,7 @@ export function Journal({ onClose }: { onClose: () => void }) {
       </h3>
       <div className="journal-achievements">
         {achievements.map((a) => {
-          const unlocked = profile.achievements.includes(a.id);
+          const unlocked = unlockedAchievements.has(a.id);
           return (
             <div key={a.id} className={unlocked ? "unlocked" : ""}>
               {unlocked ? <Award size={18} /> : <LockKeyhole size={16} />}
@@ -93,10 +102,10 @@ export function Journal({ onClose }: { onClose: () => void }) {
         {endings.map((e) => (
           <div
             key={e.id}
-            className={profile.endings.includes(e.id) ? "discovered" : ""}
+            className={discoveredEndings.has(e.id) ? "discovered" : ""}
           >
             <strong>
-              {profile.endings.includes(e.id) ? e.title : "Undiscovered ending"}
+              {discoveredEndings.has(e.id) ? e.title : "Undiscovered ending"}
             </strong>
             <p>{e.description}</p>
           </div>
