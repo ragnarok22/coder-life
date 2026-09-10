@@ -83,7 +83,48 @@ test("menu, controls and local save restore in an isolated browser", async ({
   await page.reload();
   await expect(page.getByRole("button", { name: /Continue/ })).toBeEnabled();
   await page.getByRole("button", { name: /Continue/ }).click();
-  await expect(page.getByText("MONDAY, INC.", { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: /Sit down & code/ }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: /Sit down & code/ }).click();
+  // The manager must navigate to the desk rather than teleport or open a timed popup.
+  await expect(
+    page.getByRole("dialog", { name: "The quick sync" }),
+  ).toBeVisible({ timeout: 75000 });
+  await page.screenshot({
+    path: testInfo.outputPath("manager-interruption.png"),
+  });
+  await page
+    .getByRole("button", { name: /Can you put it in a ticket/ })
+    .click();
+  await page.getByRole("button", { name: /Sit down & code/ }).click();
+  // Step the actual rules at one-minute intervals to verify the remainder without a nine-minute test.
+  await page.evaluate(async () => {
+    const path = "/src/game/store.ts";
+    const { useGame } = await import(/* @vite-ignore */ path);
+    for (
+      let minute = 0;
+      minute < 600 && !useGame.getState().game.finished;
+      minute++
+    ) {
+      if (useGame.getState().game.dialogue) useGame.getState().choose(1);
+      useGame.getState().tick(1);
+    }
+    await useGame.getState().save();
+  });
+  await expect(
+    page.getByRole("heading", { name: "Day one. You survived." }),
+  ).toBeVisible();
+  await page.screenshot({
+    path: testInfo.outputPath("results.png"),
+    fullPage: true,
+  });
+  await page.getByRole("button", { name: "Back to main menu" }).click();
+  await page.reload();
+  await page.getByRole("button", { name: /Continue/ }).click();
+  await expect(
+    page.getByRole("heading", { name: "The damage report." }),
+  ).toBeVisible();
   expect(errors).toEqual([]);
 });
 

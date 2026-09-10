@@ -75,7 +75,11 @@ export function Npc({
           .reverse()
           .find((s) => s.at <= state.game.minutes - index * 2);
         const goal = wantsPlayer ? "wander" : schedule?.goal;
-        if (goal === "desk") b.destination = npc.desk;
+        if (wantsPlayer && b.searchTime < 20) {
+          // The desk is a known landmark, not omniscient knowledge of the player's position.
+          b.destination = [-6, 3.4];
+          b.searchTime += b.timer;
+        } else if (goal === "desk") b.destination = npc.desk;
         else if (goal === "coffee")
           b.destination = [7.5 + (index % 2) * 0.8, 3.8 + (index % 3) * 0.8];
         else if (goal === "meeting")
