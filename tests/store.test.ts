@@ -3,12 +3,35 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useGame } from "../src/game/store";
 import { initialGame, advance } from "../src/game/rules";
 import { initialProfile } from "../src/game/profile";
+import { walkable } from "../src/ai/navigation";
 import { runtime } from "../src/game/runtime";
 
 vi.mock("../src/game/audio", () => ({
   audio: { unlock: vi.fn(), play: vi.fn(), configure: vi.fn() },
 }));
 describe("Day 1 integration", () => {
+  it("continues older positions on clear floor after furniture changes", async () => {
+    runtime.player = [-4, -8.3];
+    useGame.setState({
+      game: {
+        ...initialGame(),
+        awake: true,
+        working: true,
+        location: "office",
+        position: [-4, -8.3],
+      },
+      profile: initialProfile(),
+      screen: "playing",
+    });
+    await useGame.getState().save();
+    useGame.setState({ screen: "menu" });
+    await useGame.getState().continueGame();
+    const game = useGame.getState().game;
+    expect(walkable(game.position, "office")).toBe(true);
+    expect(game.position).not.toEqual([-4, -8.3]);
+    expect(game.working).toBe(false);
+    expect(game.minutes).toBe(480);
+  });
   beforeEach(() => {
     useGame.setState({
       game: initialGame(),

@@ -10,9 +10,10 @@ test("camera rays track endpoints without streaming position buffers", async ({
   });
   await page.goto("/");
   await page.getByRole("button", { name: "New game", exact: true }).click();
-  await page.getByRole("button", { name: "Development tools" }).click();
-  await page.getByLabel("Office overview", { exact: true }).check();
-  await page.getByLabel("Camera collision rays", { exact: true }).check();
+  await expect(
+    page.getByRole("button", { name: "Development tools" }),
+  ).toBeVisible();
+  await expect(page.locator("canvas")).toBeVisible();
 
   const samples = await page.evaluate(async () => {
     const source = (path: string) =>
@@ -40,11 +41,25 @@ test("camera rays track endpoints without streaming position buffers", async ({
     const { runtime } = await import(
       /* @vite-ignore */ source("/src/game/runtime.ts")
     );
-    const state = _roots.get(document.querySelector("canvas")).store.getState();
+    const { changeSceneDebug } = await import(
+      /* @vite-ignore */ source("/src/game/scene-debug.ts")
+    );
+    changeSceneDebug({ overview: true, camera: true });
+    for (let frame = 0; frame < 120 && !_roots.size; frame++)
+      await new Promise(requestAnimationFrame);
+    const root = _roots.get(document.querySelector("canvas"));
+    if (!root)
+      throw new Error(
+        `No canvas root: ${_roots.size} roots from ${source("/node_modules/.vite/deps/@react-three_fiber.js")}`,
+      );
+    const state = root.store.getState();
     let rays: InstanceType<typeof LineSegments> | undefined;
-    state.scene.traverse((object: InstanceType<typeof LineSegments>) => {
-      if (object.isLineSegments && object.renderOrder === 50) rays = object;
-    });
+    for (let frame = 0; frame < 120 && !rays; frame++) {
+      await new Promise(requestAnimationFrame);
+      state.scene.traverse((object: InstanceType<typeof LineSegments>) => {
+        if (object.isLineSegments && object.renderOrder === 50) rays = object;
+      });
+    }
     if (!rays) throw new Error("Camera rays did not mount");
 
     state.setFrameloop("never");

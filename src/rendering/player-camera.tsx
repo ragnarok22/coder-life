@@ -49,11 +49,6 @@ export function PlayerCamera({ target }: { target: RefObject<Group | null> }) {
       runtime.camera.drawCalls = gl.info.render.calls;
       runtime.camera.triangles = gl.info.render.triangles;
     }
-    if (import.meta.env.DEV && sceneDebug.overview) {
-      camera.position.set(25, 30, 32);
-      camera.lookAt(0, 0, 0);
-      return;
-    }
     const rig = rigRef.current,
       look = lookRef.current;
     if (!rig || !look) return;
@@ -62,8 +57,13 @@ export function PlayerCamera({ target }: { target: RefObject<Group | null> }) {
     look.y += C.lookHeight;
     const state = useGame.getState();
     updateCameraRig(rig, look, input, dt, queries.sweep, !!state.game.dialogue);
-    camera.position.copy(rig.position);
-    camera.lookAt(rig.target);
+    if (import.meta.env.DEV && sceneDebug.overview) {
+      camera.position.set(25, 30, 32);
+      camera.lookAt(0, 0, 0);
+    } else {
+      camera.position.copy(rig.position);
+      camera.lookAt(rig.target);
+    }
     runtime.camera.yaw = rig.yaw;
     runtime.camera.pitch = rig.pitch;
     runtime.camera.collided = rig.collided;

@@ -11,7 +11,7 @@ import type { Group } from "three";
 import { input } from "../game/input";
 import { runtime } from "../game/runtime";
 import { useGame } from "../game/store";
-import { objects } from "../data/world";
+import { objects, groundHeight } from "../data/world";
 import { lineOfSight } from "../ai/navigation";
 import { Character } from "./character";
 import { audio } from "../game/audio";
@@ -198,7 +198,11 @@ export function Player() {
         ref={body}
         type="kinematicPosition"
         colliders={false}
-        position={[spawn[0], 0.86, spawn[1]]}
+        position={[
+          spawn[0],
+          0.86 + groundHeight(spawn, useGame.getState().game.location),
+          spawn[1],
+        ]}
         enabledRotations={[false, false, false]}
       >
         <CapsuleCollider args={[M.halfHeight, M.radius]} />
