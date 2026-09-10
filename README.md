@@ -26,14 +26,14 @@ Open the URL printed by Vite. See the [contributing guide](CONTRIBUTING.md#set-u
 
 Start a **New game**, press **E** to wake up, and follow the map to the office. Find **YOUR DESK** and press **E** to work. Balance your tasks with requests and breaks until the day ends.
 
-| Input             | Action                        |
-| ----------------- | ----------------------------- |
-| WASD / arrow keys | Move                          |
-| Shift             | Move faster                   |
-| Mouse drag        | Rotate camera                 |
-| Scroll            | Zoom                          |
+| Input             | Action                         |
+| ----------------- | ------------------------------ |
+| WASD / arrow keys | Move                           |
+| Shift             | Move faster                    |
+| Mouse drag        | Rotate camera                  |
+| Scroll            | Zoom                           |
 | E                 | Interact / get up / leave desk |
-| Escape            | Pause / resume                |
+| Escape            | Pause / resume                 |
 
 Touch controls are available; keyboard and mouse are recommended. Dialogues, pause menus, and hidden tabs pause the clock. Use **Continue** to resume a saved game.
 
